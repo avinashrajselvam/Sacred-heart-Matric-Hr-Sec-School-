@@ -8,7 +8,7 @@ const { logActivity, todayStr } = require('../utils/helpers');
 // ── School Location (Arakkonam) ───────────────────────────────────────────────
 const SCHOOL_LAT = 13.083268;
 const SCHOOL_LNG = 79.666565;
-const MAX_RADIUS_M = 10; // 10 metres
+const MAX_RADIUS_M = 500; // 500 metres radius around Sacred Heart School, Arakkonam
 
 /**
  * Haversine formula — distance between two GPS points in metres
