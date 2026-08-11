@@ -1,0 +1,172 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title><%= title %> — Sacred Heart School CRM</title>
+  <meta name="description" content="Sacred Heart Matric Hr Sec School — School Management System"/>
+  <link rel="preconnect" href="https://fonts.googleapis.com"/>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet"/>
+  <link rel="stylesheet" href="/css/styles.css"/>
+  <style>
+    <%- typeof extraCss !== 'undefined' ? extraCss : '' %>
+  </style>
+</head>
+<body>
+<div class="app-layout">
+
+  <!-- Sidebar Overlay (mobile) -->
+  <div class="sidebar-overlay" id="sidebarOverlay"></div>
+
+  <!-- ── Sidebar ─────────────────────────────────────────────────────── -->
+  <aside class="sidebar" id="sidebar">
+    <div class="sidebar-brand">
+      <img src="/images/logo.png" alt="Sacred Heart School Logo" class="brand-logo-img"/>
+      <div class="school-name">Sacred Heart<br/>Matric Hr Sec School</div>
+      <div class="school-sub">Arakkonam</div>
+    </div>
+
+    <% if (user) { %>
+    <div class="sidebar-user">
+      <div class="user-avatar"><%= user.displayName ? user.displayName[0].toUpperCase() : 'U' %></div>
+      <div class="user-info">
+        <div class="user-name"><%= user.displayName || user.username %></div>
+        <div class="user-role"><%= user.role %></div>
+      </div>
+    </div>
+    <% } %>
+
+    <nav class="sidebar-nav">
+      <% if (user && user.role === 'admin') { %>
+      <div class="nav-section-title">Admin</div>
+      <div class="nav-item">
+        <a href="/admin" class="nav-link"><span class="nav-icon">📊</span> Dashboard</a>
+      </div>
+      <div class="nav-section-title">Management</div>
+      <div class="nav-item">
+        <a href="/admin/students" class="nav-link"><span class="nav-icon">👨‍🎓</span> Students</a>
+      </div>
+      <div class="nav-item">
+        <a href="/admin/staff" class="nav-link"><span class="nav-icon">👨‍🏫</span> Staff</a>
+      </div>
+      <div class="nav-item">
+        <a href="/admin/classes" class="nav-link"><span class="nav-icon">🏛️</span> Classes & Sections</a>
+      </div>
+      <div class="nav-section-title">Finance</div>
+      <div class="nav-item">
+        <a href="/fees/collect" class="nav-link"><span class="nav-icon">💳</span> Collect Fee</a>
+      </div>
+      <div class="nav-item">
+        <a href="/admin/fee-structure" class="nav-link"><span class="nav-icon">📋</span> Fee Structure</a>
+      </div>
+      <div class="nav-item">
+        <a href="/fees/pending" class="nav-link"><span class="nav-icon">⚠️</span> Pending Fees</a>
+      </div>
+      <div class="nav-item">
+        <a href="/fees/history" class="nav-link"><span class="nav-icon">🧾</span> Payment History</a>
+      </div>
+      <div class="nav-section-title">Academic</div>
+      <div class="nav-item">
+        <a href="/admin/attendance" class="nav-link"><span class="nav-icon">📅</span> Attendance</a>
+      </div>
+      <div class="nav-item">
+        <a href="/admin/staff-attendance" class="nav-link"><span class="nav-icon">🕐</span> Staff Attendance</a>
+      </div>
+      <div class="nav-item">
+        <a href="/admin/announcements" class="nav-link"><span class="nav-icon">📢</span> Announcements</a>
+      </div>
+      <div class="nav-item">
+        <a href="/admin/reports" class="nav-link"><span class="nav-icon">📈</span> Reports</a>
+      </div>
+
+      <% } else if (user && user.role === 'staff') { %>
+      <div class="nav-section-title">Staff</div>
+      <div class="nav-item">
+        <a href="/staff" class="nav-link"><span class="nav-icon">📊</span> Dashboard</a>
+      </div>
+      <div class="nav-item">
+        <a href="/staff/profile" class="nav-link"><span class="nav-icon">👤</span> My Profile</a>
+      </div>
+      <div class="nav-item">
+        <a href="/staff/students" class="nav-link"><span class="nav-icon">👨‍🎓</span> My Students</a>
+      </div>
+      <div class="nav-section-title">Attendance</div>
+      <div class="nav-item">
+        <a href="/staff/my-attendance" class="nav-link"><span class="nav-icon">🕐</span> My Attendance</a>
+      </div>
+      <div class="nav-item">
+        <a href="/staff/attendance/mark" class="nav-link"><span class="nav-icon">✏️</span> Mark Attendance</a>
+      </div>
+      <div class="nav-item">
+        <a href="/staff/attendance/view" class="nav-link"><span class="nav-icon">📅</span> View Attendance</a>
+      </div>
+      <div class="nav-item">
+        <a href="/staff/announcements" class="nav-link"><span class="nav-icon">📢</span> Announcements</a>
+      </div>
+
+      <% } else if (user && user.role === 'student') { %>
+      <div class="nav-section-title">Student</div>
+      <div class="nav-item">
+        <a href="/student" class="nav-link"><span class="nav-icon">📊</span> Dashboard</a>
+      </div>
+      <div class="nav-item">
+        <a href="/student/profile" class="nav-link"><span class="nav-icon">👤</span> My Profile</a>
+      </div>
+      <div class="nav-item">
+        <a href="/student/fees" class="nav-link"><span class="nav-icon">💳</span> My Fees</a>
+      </div>
+      <div class="nav-item">
+        <a href="/student/attendance" class="nav-link"><span class="nav-icon">📅</span> My Attendance</a>
+      </div>
+      <div class="nav-item">
+        <a href="/student/announcements" class="nav-link"><span class="nav-icon">📢</span> Announcements</a>
+      </div>
+      <% } %>
+    </nav>
+
+    <div class="sidebar-footer">
+      <div class="nav-item">
+        <a href="/logout" class="nav-link"><span class="nav-icon">🚪</span> Logout</a>
+      </div>
+    </div>
+  </aside>
+
+  <!-- ── Main Content ─────────────────────────────────────────────────── -->
+  <div class="main-content">
+
+    <!-- Top Bar -->
+    <header class="topbar">
+      <div class="topbar-left">
+        <button class="sidebar-toggle" id="sidebarToggle" aria-label="Toggle menu">☰</button>
+        <div>
+          <div class="topbar-title"><%= title %></div>
+        </div>
+      </div>
+      <div class="topbar-right">
+        <span class="topbar-date" id="topbarDate"></span>
+        <% if (user && user.role === 'admin') { %>
+        <a href="/fees/collect" class="btn btn-accent btn-sm">+ Collect Fee</a>
+        <% } %>
+      </div>
+    </header>
+
+    <!-- Flash Messages -->
+    <% if (flash && flash.message) { %>
+    <div id="flashData" data-type="<%= flash.type %>" data-message="<%= flash.message %>" style="display:none"></div>
+    <% } %>
+
+    <!-- Page Content -->
+    <main class="page-content fade-in">
+      <%- body %>
+    </main>
+
+  </div><!-- /main-content -->
+</div><!-- /app-layout -->
+
+<script src="/js/charts.js"></script>
+<script src="/js/app.js"></script>
+<% if (typeof pageScript !== 'undefined') { %>
+<script><%- pageScript %></script>
+<% } %>
+</body>
+</html>

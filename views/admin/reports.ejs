@@ -1,0 +1,117 @@
+<!-- Reports -->
+<div class="page-header">
+  <div>
+    <h1 class="page-title">Reports</h1>
+    <p class="page-subtitle">Generate fee collection and attendance reports</p>
+  </div>
+  <% if (payments.length) { %>
+  <button class="btn btn-primary" data-print>🖨️ Print Report</button>
+  <% } %>
+</div>
+
+<!-- Report Filters -->
+<div class="card" style="margin-bottom:20px">
+  <div class="card-header"><div class="card-title">📊 Fee Collection Report</div></div>
+  <div class="card-body">
+    <form method="GET" action="/admin/reports">
+      <div class="form-row cols-3">
+        <div class="form-group">
+          <label class="form-label">From Date <span class="required">*</span></label>
+          <input type="date" name="from" class="form-control" value="<%= from %>" required/>
+        </div>
+        <div class="form-group">
+          <label class="form-label">To Date <span class="required">*</span></label>
+          <input type="date" name="to" class="form-control" value="<%= to %>" required/>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Class (Optional)</label>
+          <select name="class_id" class="form-control">
+            <option value="">All Classes</option>
+            <% classes.forEach(c => { %>
+            <option value="<%= c.id %>" <%= class_id == c.id ? 'selected' : '' %>><%= c.name %></option>
+            <% }) %>
+          </select>
+        </div>
+      </div>
+      <div style="display:flex;gap:10px">
+        <button type="submit" class="btn btn-primary">Generate Report</button>
+        <button type="button" onclick="
+          const today = new Date().toISOString().split('T')[0];
+          const firstOfMonth = today.slice(0,8)+'01';
+          document.querySelector('[name=from]').value = firstOfMonth;
+          document.querySelector('[name=to]').value = today;
+          this.form.submit();
+        " class="btn btn-outline">This Month</button>
+        <button type="button" onclick="
+          const today = new Date().toISOString().split('T')[0];
+          document.querySelector('[name=from]').value = today;
+          document.querySelector('[name=to]').value = today;
+          this.form.submit();
+        " class="btn btn-outline">Today</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<% if (from && to) { %>
+<!-- Report Results -->
+<div class="card">
+  <div class="card-header">
+    <div>
+      <div class="card-title">Fee Report: <%= formatDate(from) %> to <%= formatDate(to) %></div>
+      <div class="card-subtitle"><%= payments.length %> transaction<%= payments.length !== 1 ? 's' : '' %></div>
+    </div>
+    <div style="text-align:right">
+      <div style="font-size:13px;color:#64748b">Total Collected</div>
+      <div style="font-size:22px;font-weight:800;color:#22c55e"><%= formatCurrency(total) %></div>
+    </div>
+  </div>
+  <div class="card-body" style="padding:0">
+    <% if (payments.length) { %>
+    <div class="table-wrap">
+      <table class="data-table">
+        <thead>
+          <tr>
+            <th>Receipt No.</th>
+            <th>Student</th>
+            <th>Class</th>
+            <th>Fee Type</th>
+            <th>Amount</th>
+            <th>Method</th>
+            <th>Date</th>
+          </tr>
+        </thead>
+        <tbody>
+        <% payments.forEach(p => { %>
+        <tr>
+          <td><span class="badge badge-secondary"><%= p.receipt_number %></span></td>
+          <td>
+            <div style="font-weight:600"><%= p.first_name %> <%= p.last_name %></div>
+            <div style="font-size:11.5px;color:#94a3b8"><%= p.admission_no %></div>
+          </td>
+          <td><%= p.class_name || '—' %></td>
+          <td><%= p.fee_name || 'General' %></td>
+          <td><strong style="color:#22c55e"><%= formatCurrency(p.amount_paid) %></strong></td>
+          <td><span class="badge badge-info"><%= p.payment_method %></span></td>
+          <td style="font-size:12px"><%= formatDate(p.payment_date) %></td>
+        </tr>
+        <% }) %>
+        </tbody>
+        <tfoot>
+          <tr>
+            <td colspan="4" style="font-weight:700;font-size:14px;padding:14px 16px">TOTAL</td>
+            <td colspan="3" style="font-weight:800;font-size:16px;color:#22c55e;padding:14px 16px"><%= formatCurrency(total) %></td>
+          </tr>
+        </tfoot>
+      </table>
+    </div>
+    <% } else { %>
+    <div class="empty-state">
+      <div class="empty-icon">📊</div>
+      <h3>No Records</h3>
+      <p>No fee payments found for the selected date range.</p>
+    </div>
+    <% } %>
+  </div>
+</div>
+<% } %>

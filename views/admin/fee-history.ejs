@@ -1,0 +1,90 @@
+<!-- Fee Payment History -->
+<div class="page-header">
+  <div>
+    <h1 class="page-title">Fee Payment History</h1>
+    <p class="page-subtitle">Total Transactions: <%= total %> | Total Collected: <%= formatCurrency(grandTotal) %></p>
+  </div>
+  <a href="/fees/collect" class="btn btn-primary">+ Collect Fee</a>
+</div>
+
+<!-- Search & Filters -->
+<form method="GET" action="/fees/history">
+  <div class="search-bar">
+    <div class="search-input-wrap" style="flex:2">
+      <span class="search-icon">🔍</span>
+      <input type="text" name="search" class="form-control search-form-input"
+             placeholder="Search by student name, admission no, or receipt no…" value="<%= search %>"/>
+    </div>
+    <div style="display:flex;align-items:center;gap:6px">
+      <span style="font-size:12px;color:#64748b">From:</span>
+      <input type="date" name="from" class="form-control" value="<%= from %>"/>
+    </div>
+    <div style="display:flex;align-items:center;gap:6px">
+      <span style="font-size:12px;color:#64748b">To:</span>
+      <input type="date" name="to" class="form-control" value="<%= to %>"/>
+    </div>
+    <button type="submit" class="btn btn-primary">Filter</button>
+    <a href="/fees/history" class="btn btn-outline">Clear</a>
+  </div>
+</form>
+
+<div class="card">
+  <div class="card-body" style="padding:0">
+    <% if (payments.length) { %>
+    <div class="table-wrap">
+      <table class="data-table">
+        <thead>
+          <tr>
+            <th>Receipt No.</th>
+            <th>Student</th>
+            <th>Class</th>
+            <th>Fee Type</th>
+            <th>Amount Paid</th>
+            <th>Method</th>
+            <th>Date</th>
+            <th>Receipt</th>
+          </tr>
+        </thead>
+        <tbody>
+        <% payments.forEach(p => { %>
+        <tr>
+          <td><span class="badge badge-secondary"><%= p.receipt_number %></span></td>
+          <td>
+            <div style="font-weight:600"><%= p.first_name %> <%= p.last_name %></div>
+            <div style="font-size:11.5px;color:#94a3b8"><%= p.admission_no %></div>
+          </td>
+          <td><%= p.class_name || '—' %></td>
+          <td><%= p.fee_name || 'General Payment' %></td>
+          <td><strong style="color:#22c55e"><%= formatCurrency(p.amount_paid) %></strong></td>
+          <td><span class="badge badge-info"><%= p.payment_method %></span></td>
+          <td style="font-size:12px;color:#64748b"><%= formatDate(p.payment_date) %></td>
+          <td>
+            <div style="display:flex;gap:4px">
+              <a href="/fees/receipt/<%= p.receipt_number %>" class="btn btn-ghost btn-sm" target="_blank">👁️ View</a>
+              <a href="/fees/receipt/<%= p.receipt_number %>/pdf" class="btn btn-ghost btn-sm" target="_blank">📄 PDF</a>
+            </div>
+          </td>
+        </tr>
+        <% }) %>
+        </tbody>
+      </table>
+    </div>
+
+    <% if (totalPages > 1) { %>
+    <div class="pagination">
+      <% for (let i = 1; i <= totalPages; i++) { %>
+      <a href="?page=<%= i %>&search=<%= search %>&from=<%= from %>&to=<%= to %>"
+         class="page-btn <%= page === i ? 'active' : '' %>"><%= i %></a>
+      <% } %>
+    </div>
+    <% } %>
+
+    <% } else { %>
+    <div class="empty-state">
+      <div class="empty-icon">🧾</div>
+      <h3>No Payment Records</h3>
+      <p>No fee payments match your filters.</p>
+    </div>
+    <% } %>
+  </div>
+</div>

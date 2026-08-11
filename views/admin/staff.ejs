@@ -1,0 +1,76 @@
+<!-- Staff List -->
+<div class="page-header">
+  <div>
+    <h1 class="page-title">Staff</h1>
+    <p class="page-subtitle"><%= staff.length %> staff member<%= staff.length !== 1 ? 's' : '' %></p>
+  </div>
+  <a href="/admin/staff/new" class="btn btn-primary">+ Add Staff</a>
+</div>
+
+<form method="GET" action="/admin/staff">
+  <div class="search-bar">
+    <div class="search-input-wrap">
+      <span class="search-icon">🔍</span>
+      <input type="text" name="search" class="form-control search-form-input"
+             placeholder="Search by name, ID, designation…" value="<%= search %>"/>
+    </div>
+    <a href="/admin/staff" class="btn btn-outline">Clear</a>
+  </div>
+</form>
+
+<div class="card">
+  <div class="card-body" style="padding:0">
+    <% if (staff.length) { %>
+    <div class="table-wrap">
+      <table class="data-table">
+        <thead>
+          <tr>
+            <th>Employee ID</th>
+            <th>Name</th>
+            <th>Designation</th>
+            <th>Department</th>
+            <th>Assigned Class</th>
+            <th>Phone</th>
+            <th>Joined</th>
+            <th>Actions</th>
+          </tr>
+        </thead>
+        <tbody>
+        <% staff.forEach(s => { %>
+        <tr>
+          <td><span class="badge badge-secondary"><%= s.employee_id %></span></td>
+          <td>
+            <div style="font-weight:600"><%= s.first_name %> <%= s.last_name %></div>
+            <div style="font-size:11.5px;color:#94a3b8"><%= s.email || '' %></div>
+          </td>
+          <td><%= s.designation || '—' %></td>
+          <td><%= s.department || '—' %></td>
+          <td>
+            <% if (s.class_name) { %><span class="badge badge-info"><%= s.class_name %><% if(s.section_name) { %> — Sec <%= s.section_name %><% } %></span><% } else { %><span style="color:#94a3b8">—</span><% } %>
+          </td>
+          <td style="font-size:13px"><%= s.phone || '—' %></td>
+          <td style="font-size:12px;color:#64748b"><%= formatDate(s.date_of_joining) %></td>
+          <td>
+            <div style="display:flex;gap:6px">
+              <a href="/admin/staff/<%= s.id %>/edit" class="btn btn-outline btn-sm">✏️ Edit</a>
+              <form method="POST" action="/admin/staff/<%= s.id %>/delete"
+                    data-confirm="Deactivate this staff member?">
+                <button type="submit" class="btn btn-ghost btn-sm">🗑️</button>
+              </form>
+            </div>
+          </td>
+        </tr>
+        <% }) %>
+        </tbody>
+      </table>
+    </div>
+    <% } else { %>
+    <div class="empty-state">
+      <div class="empty-icon">👨‍🏫</div>
+      <h3>No Staff Found</h3>
+      <p>No staff members match your search.</p>
+      <a href="/admin/staff/new" class="btn btn-primary" style="margin-top:16px">+ Add First Staff</a>
+    </div>
+    <% } %>
+  </div>
+</div>

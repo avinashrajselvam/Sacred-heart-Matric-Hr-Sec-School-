@@ -1,0 +1,66 @@
+<!-- Pending Fees List -->
+<div class="page-header">
+  <div>
+    <h1 class="page-title">Pending / Due Fees List</h1>
+    <p class="page-subtitle"><%= students.length %> student<%= students.length !== 1 ? 's' : '' %> with outstanding balance</p>
+  </div>
+  <a href="/fees/collect" class="btn btn-primary">+ Collect Fee</a>
+</div>
+
+<!-- Class Filter -->
+<form method="GET" action="/fees/pending">
+  <div class="search-bar">
+    <select name="class_id" class="form-control" style="max-width:200px" onchange="this.form.submit()">
+      <option value="">All Classes</option>
+      <% classes.forEach(c => { %>
+      <option value="<%= c.id %>" <%= class_id == c.id ? 'selected' : '' %>><%= c.name %></option>
+      <% }) %>
+    </select>
+    <a href="/fees/pending" class="btn btn-outline">Clear Filter</a>
+  </div>
+</form>
+
+<div class="card">
+  <div class="card-body" style="padding:0">
+    <% if (students.length) { %>
+    <div class="table-wrap">
+      <table class="data-table">
+        <thead>
+          <tr>
+            <th>Admission No.</th>
+            <th>Student Name</th>
+            <th>Class / Section</th>
+            <th>Parent Phone</th>
+            <th>Total Fee</th>
+            <th>Amount Paid</th>
+            <th>Balance Due</th>
+            <th>Action</th>
+          </tr>
+        </thead>
+        <tbody>
+        <% students.forEach(s => { %>
+        <tr>
+          <td><span class="badge badge-secondary"><%= s.admission_no %></span></td>
+          <td><strong><%= s.first_name %> <%= s.last_name %></strong></td>
+          <td><%= s.class_name || '—' %><% if(s.section_name) { %> — Sec <%= s.section_name %><% } %></td>
+          <td><%= s.parent_phone || '—' %></td>
+          <td><%= formatCurrency(s.total_fee) %></td>
+          <td style="color:#22c55e"><%= formatCurrency(s.total_paid) %></td>
+          <td><strong style="color:#ef4444"><%= formatCurrency(s.balance) %></strong></td>
+          <td>
+            <a href="/fees/collect?student_id=<%= s.id %>" class="btn btn-accent btn-sm">💳 Collect Fee</a>
+          </td>
+        </tr>
+        <% }) %>
+        </tbody>
+      </table>
+    </div>
+    <% } else { %>
+    <div class="empty-state">
+      <div class="empty-icon">🎉</div>
+      <h3>No Pending Fees!</h3>
+      <p>All students in this category have cleared their dues.</p>
+    </div>
+    <% } %>
+  </div>
+</div>

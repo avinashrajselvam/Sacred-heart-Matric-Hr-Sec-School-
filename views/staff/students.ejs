@@ -1,0 +1,70 @@
+<!-- Staff Assigned Students List -->
+<div class="page-header">
+  <div>
+    <h1 class="page-title">My Assigned Students</h1>
+    <p class="page-subtitle"><%= staffInfo.class_name || 'Class' %> — Section <%= staffInfo.section_name || 'A' %> (<%= students.length %> students)</p>
+  </div>
+  <a href="/staff/attendance/mark" class="btn btn-primary">✏️ Mark Attendance</a>
+</div>
+
+<!-- Search Bar -->
+<form method="GET" action="/staff/students">
+  <div class="search-bar">
+    <div class="search-input-wrap">
+      <span class="search-icon">🔍</span>
+      <input type="text" name="search" class="form-control search-form-input"
+             placeholder="Search by student name or admission no…" value="<%= search %>"/>
+    </div>
+    <a href="/staff/students" class="btn btn-outline">Clear</a>
+  </div>
+</form>
+
+<div class="card">
+  <div class="card-body" style="padding:0">
+    <% if (students.length) { %>
+    <div class="table-wrap">
+      <table class="data-table">
+        <thead>
+          <tr>
+            <th>Admission No.</th>
+            <th>Student Name</th>
+            <th>Parent Contact</th>
+            <th>Today's Status</th>
+            <th>Action</th>
+          </tr>
+        </thead>
+        <tbody>
+        <% students.forEach(s => { %>
+        <tr>
+          <td><span class="badge badge-secondary"><%= s.admission_no %></span></td>
+          <td>
+            <div style="font-weight:600"><%= s.first_name %> <%= s.last_name %></div>
+            <div style="font-size:11.5px;color:#94a3b8"><%= s.gender || '' %></div>
+          </td>
+          <td>
+            <div style="font-size:13px"><%= s.parent_name || '—' %></div>
+            <div style="font-size:11.5px;color:#64748b"><%= s.parent_phone || '—' %></div>
+          </td>
+          <td>
+            <% if(s.todayStatus==='present'){ %><span class="badge att-present">✅ Present</span>
+            <% }else if(s.todayStatus==='absent'){ %><span class="badge att-absent">❌ Absent</span>
+            <% }else if(s.todayStatus==='leave'){ %><span class="badge att-leave">📋 Leave</span>
+            <% }else{ %><span class="badge att-none">Not Marked</span><% } %>
+          </td>
+          <td>
+            <a href="/staff/students/<%= s.id %>" class="btn btn-outline btn-sm">👁️ View Details</a>
+          </td>
+        </tr>
+        <% }) %>
+        </tbody>
+      </table>
+    </div>
+    <% } else { %>
+    <div class="empty-state">
+      <div class="empty-icon">👨‍🎓</div>
+      <h3>No Students Found</h3>
+      <p>No students assigned to your class match your search.</p>
+    </div>
+    <% } %>
+  </div>
+</div>

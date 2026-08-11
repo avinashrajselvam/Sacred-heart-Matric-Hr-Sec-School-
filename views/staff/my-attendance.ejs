@@ -1,0 +1,275 @@
+<%# Staff — My Attendance (Punch Card) %>
+
+<div class="page-header">
+  <div>
+    <h1 class="page-title">My Attendance</h1>
+    <p class="page-subtitle">GPS-verified punch in &amp; punch out</p>
+  </div>
+</div>
+
+<style>
+  /* ── Punch Card ── */
+  .punch-card{background:linear-gradient(135deg,#1e2a3a 0%,#0f172a 100%);border-radius:20px;padding:36px 32px;color:#fff;margin-bottom:24px;position:relative;overflow:hidden;}
+  .punch-card::before{content:'';position:absolute;top:-60px;right:-60px;width:240px;height:240px;border-radius:50%;background:rgba(99,102,241,.12);}
+  .punch-card-top{display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:16px;margin-bottom:28px;}
+  .punch-date{font-size:15px;color:#94a3b8;}
+  .punch-date strong{color:#e2e8f0;font-size:17px;}
+
+  /* GPS Badge */
+  .gps-badge{display:inline-flex;align-items:center;gap:8px;padding:6px 14px;border-radius:999px;font-size:13px;font-weight:600;transition:all .4s;}
+  .gps-badge.checking{background:rgba(251,191,36,.15);color:#fbbf24;}
+  .gps-badge.within{background:rgba(34,197,94,.15);color:#22c55e;}
+  .gps-badge.outside{background:rgba(239,68,68,.15);color:#ef4444;}
+  .gps-dot{width:8px;height:8px;border-radius:50%;background:currentColor;animation:pulse-dot 1.2s ease-in-out infinite;}
+  @keyframes pulse-dot{0%,100%{opacity:1;transform:scale(1);}50%{opacity:.4;transform:scale(1.4);}}
+
+  /* Times Row */
+  .punch-times{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:28px;}
+  .punch-time-box{background:rgba(255,255,255,.06);border-radius:12px;padding:16px 20px;}
+  .punch-time-label{font-size:11px;text-transform:uppercase;letter-spacing:.8px;color:#64748b;margin-bottom:6px;}
+  .punch-time-val{font-size:18px;font-weight:700;color:#e2e8f0;}
+  .punch-time-val.empty{color:#475569;font-weight:400;font-style:italic;font-size:15px;}
+
+  /* Big punch button */
+  .punch-btn-wrap{display:flex;justify-content:center;gap:16px;flex-wrap:wrap;}
+  .punch-btn{display:inline-flex;align-items:center;gap:10px;padding:16px 40px;border-radius:14px;font-size:17px;font-weight:700;border:none;cursor:pointer;transition:all .25s;letter-spacing:.3px;}
+  .punch-btn:disabled{opacity:.45;cursor:not-allowed;transform:none!important;}
+  .punch-btn-login{background:linear-gradient(135deg,#22c55e,#16a34a);color:#fff;box-shadow:0 4px 20px rgba(34,197,94,.4);}
+  .punch-btn-login:hover:not(:disabled){transform:translateY(-2px);box-shadow:0 8px 28px rgba(34,197,94,.55);}
+  .punch-btn-logout{background:linear-gradient(135deg,#ef4444,#b91c1c);color:#fff;box-shadow:0 4px 20px rgba(239,68,68,.4);}
+  .punch-btn-logout:hover:not(:disabled){transform:translateY(-2px);box-shadow:0 8px 28px rgba(239,68,68,.55);}
+
+  /* Error / success toast inside card */
+  .punch-msg{margin-top:16px;padding:10px 16px;border-radius:10px;font-size:14px;font-weight:500;display:none;}
+  .punch-msg.ok{background:rgba(34,197,94,.15);color:#4ade80;}
+  .punch-msg.err{background:rgba(239,68,68,.15);color:#f87171;}
+
+  /* Duration pill */
+  .duration-pill{display:inline-block;background:rgba(99,102,241,.18);color:#a5b4fc;padding:2px 10px;border-radius:999px;font-size:12px;font-weight:600;margin-top:4px;}
+
+  /* History table status badges */
+  .status-present{background:#dcfce7;color:#16a34a;}
+  .status-absent{background:#fee2e2;color:#dc2626;}
+  .status-half-day{background:#fef9c3;color:#ca8a04;}
+  .status-punched-out{background:#ede9fe;color:#7c3aed;}
+</style>
+
+<div class="punch-card">
+  <div class="punch-card-top">
+    <div>
+      <div class="punch-date">Today — <strong id="todayLabel"><%= today %></strong></div>
+    </div>
+    <div id="gpsBadge" class="gps-badge checking">
+      <span class="gps-dot"></span>
+      <span id="gpsText">Acquiring GPS…</span>
+    </div>
+  </div>
+
+  <!-- Login / Logout times -->
+  <div class="punch-times">
+    <div class="punch-time-box">
+      <div class="punch-time-label">🟢 Login Time</div>
+      <div class="punch-time-val <%= todayRecord && todayRecord.login_time ? '' : 'empty' %>" id="loginTimeDisplay">
+        <% if (todayRecord && todayRecord.login_time) { %>
+          <%= new Date(todayRecord.login_time).toLocaleTimeString('en-IN', {hour:'2-digit',minute:'2-digit',second:'2-digit',hour12:true}) %>
+        <% } else { %>
+          Not punched in yet
+        <% } %>
+      </div>
+    </div>
+    <div class="punch-time-box">
+      <div class="punch-time-label">🔴 Logout Time</div>
+      <div class="punch-time-val <%= todayRecord && todayRecord.logout_time ? '' : 'empty' %>" id="logoutTimeDisplay">
+        <% if (todayRecord && todayRecord.logout_time) { %>
+          <%= new Date(todayRecord.logout_time).toLocaleTimeString('en-IN', {hour:'2-digit',minute:'2-digit',second:'2-digit',hour12:true}) %>
+          <% const loginMs = new Date(todayRecord.login_time).getTime(); %>
+          <% const logoutMs = new Date(todayRecord.logout_time).getTime(); %>
+          <% const durMin = Math.round((logoutMs - loginMs)/60000); %>
+          <div class="duration-pill">⏱ <%= Math.floor(durMin/60) %>h <%= durMin%60 %>m</div>
+        <% } else { %>
+          Not punched out yet
+        <% } %>
+      </div>
+    </div>
+  </div>
+
+  <!-- Action Buttons -->
+  <div class="punch-btn-wrap">
+    <button class="punch-btn punch-btn-login" id="btnLogin"
+      <%= (todayRecord && todayRecord.login_time) ? 'disabled' : '' %>>
+      ✅ Punch In
+    </button>
+    <button class="punch-btn punch-btn-logout" id="btnLogout"
+      <%= (!todayRecord || !todayRecord.login_time || todayRecord.logout_time) ? 'disabled' : '' %>>
+      🚪 Punch Out
+    </button>
+  </div>
+
+  <div class="punch-msg" id="punchMsg"></div>
+</div>
+
+<!-- 30-day History -->
+<div class="card">
+  <div class="card-header">
+    <div class="card-title">📅 Attendance History (Last 30 Days)</div>
+  </div>
+  <div class="card-body" style="padding:0">
+    <% if (history.length) { %>
+    <table class="data-table">
+      <thead>
+        <tr>
+          <th>Date</th>
+          <th>Login Time</th>
+          <th>Logout Time</th>
+          <th>Duration</th>
+          <th>Status</th>
+        </tr>
+      </thead>
+      <tbody>
+      <% history.forEach(h => {
+           const loginT  = h.login_time  ? new Date(h.login_time)  : null;
+           const logoutT = h.logout_time ? new Date(h.logout_time) : null;
+           let durStr = '—';
+           if (loginT && logoutT) {
+             const m = Math.round((logoutT - loginT)/60000);
+             durStr = Math.floor(m/60)+'h '+(m%60)+'m';
+           }
+      %>
+      <tr>
+        <td><strong><%= h.date %></strong></td>
+        <td>
+          <% if (loginT) { %>
+            <span style="color:#22c55e;font-weight:600">
+              <%= loginT.toLocaleTimeString('en-IN',{hour:'2-digit',minute:'2-digit',hour12:true}) %>
+            </span>
+          <% } else { %><span style="color:#94a3b8">—</span><% } %>
+        </td>
+        <td>
+          <% if (logoutT) { %>
+            <span style="color:#ef4444;font-weight:600">
+              <%= logoutT.toLocaleTimeString('en-IN',{hour:'2-digit',minute:'2-digit',hour12:true}) %>
+            </span>
+          <% } else { %><span style="color:#94a3b8">—</span><% } %>
+        </td>
+        <td><% if (loginT && logoutT) { %><span class="duration-pill" style="background:#ede9fe;color:#7c3aed"><%= durStr %></span><% } else { %>—<% } %></td>
+        <td>
+          <% if (h.login_time && h.logout_time) { %>
+            <span class="badge status-punched-out">Completed</span>
+          <% } else if (h.login_time) { %>
+            <span class="badge status-present">Present</span>
+          <% } else { %>
+            <span class="badge status-absent">Absent</span>
+          <% } %>
+        </td>
+      </tr>
+      <% }) %>
+      </tbody>
+    </table>
+    <% } else { %>
+    <div class="empty-state">
+      <div class="empty-icon">📋</div>
+      <p>No attendance records yet</p>
+    </div>
+    <% } %>
+  </div>
+</div>
+
+<script>
+(function(){
+  // School coordinates
+  const SCHOOL_LAT = 13.083268;
+  const SCHOOL_LNG = 79.666565;
+  const MAX_M      = 10;
+
+  let userLat = null, userLng = null, withinZone = false;
+
+  const badge    = document.getElementById('gpsBadge');
+  const gpsText  = document.getElementById('gpsText');
+  const btnLogin  = document.getElementById('btnLogin');
+  const btnLogout = document.getElementById('btnLogout');
+  const msgBox   = document.getElementById('punchMsg');
+
+  function haversine(lat1, lng1, lat2, lng2) {
+    const R = 6371000, toRad = d => d * Math.PI / 180;
+    const dLat = toRad(lat2 - lat1), dLng = toRad(lng2 - lng1);
+    const a = Math.sin(dLat/2)**2 + Math.cos(toRad(lat1))*Math.cos(toRad(lat2))*Math.sin(dLng/2)**2;
+    return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
+  }
+
+  function updateGPSBadge(dist) {
+    if (dist <= MAX_M) {
+      badge.className = 'gps-badge within';
+      gpsText.textContent = `Within ${MAX_M}m — ${Math.round(dist)}m away ✓`;
+      withinZone = true;
+    } else {
+      badge.className = 'gps-badge outside';
+      gpsText.textContent = `${Math.round(dist)}m from school (need ≤${MAX_M}m)`;
+      withinZone = false;
+    }
+    // Re-evaluate button states based on server-set initial disabled state + zone
+    const alreadyLoggedIn  = btnLogin.hasAttribute('disabled');
+    const alreadyLoggedOut = btnLogout.hasAttribute('disabled');
+    if (!alreadyLoggedIn)  btnLogin.disabled  = !withinZone;
+    if (!alreadyLoggedOut) btnLogout.disabled = !withinZone;
+  }
+
+  function showMsg(text, isOk) {
+    msgBox.textContent = text;
+    msgBox.className = 'punch-msg ' + (isOk ? 'ok' : 'err');
+    msgBox.style.display = 'block';
+    if (isOk) setTimeout(() => location.reload(), 2000);
+  }
+
+  // Start watching GPS
+  if (!navigator.geolocation) {
+    badge.className = 'gps-badge outside';
+    gpsText.textContent = 'GPS not supported';
+    btnLogin.disabled = true;
+    btnLogout.disabled = true;
+  } else {
+    navigator.geolocation.watchPosition(
+      pos => {
+        userLat = pos.coords.latitude;
+        userLng = pos.coords.longitude;
+        const dist = haversine(SCHOOL_LAT, SCHOOL_LNG, userLat, userLng);
+        updateGPSBadge(dist);
+      },
+      err => {
+        badge.className = 'gps-badge outside';
+        gpsText.textContent = 'GPS denied — cannot punch';
+        btnLogin.disabled = true;
+        btnLogout.disabled = true;
+      },
+      { enableHighAccuracy: true, maximumAge: 10000, timeout: 15000 }
+    );
+  }
+
+  async function punch(action) {
+    if (!userLat) { showMsg('Waiting for GPS…', false); return; }
+    const btn = action === 'login' ? btnLogin : btnLogout;
+    btn.disabled = true;
+    btn.textContent = action === 'login' ? '⏳ Punching In…' : '⏳ Punching Out…';
+    try {
+      const resp = await fetch('/api/staff-attendance/' + action, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ lat: userLat, lng: userLng })
+      });
+      const data = await resp.json();
+      if (data.ok) {
+        showMsg(data.message, true);
+      } else {
+        showMsg(data.error || 'Failed', false);
+        btn.disabled = false;
+        btn.textContent = action === 'login' ? '✅ Punch In' : '🚪 Punch Out';
+      }
+    } catch(e) {
+      showMsg('Network error. Please try again.', false);
+      btn.disabled = false;
+    }
+  }
+
+  btnLogin.addEventListener('click',  () => punch('login'));
+  btnLogout.addEventListener('click', () => punch('logout'));
+})();
+</script>

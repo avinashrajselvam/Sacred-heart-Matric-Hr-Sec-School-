@@ -1,0 +1,100 @@
+<!-- Attendance Overview -->
+<div class="page-header">
+  <div>
+    <h1 class="page-title">Attendance Overview</h1>
+    <p class="page-subtitle">Date: <%= formatDate(date) %></p>
+  </div>
+</div>
+
+<!-- Filters -->
+<form method="GET" action="/admin/attendance">
+  <div class="search-bar">
+    <div class="form-group" style="margin:0">
+      <input type="date" name="date" class="form-control" value="<%= date %>" onchange="this.form.submit()"/>
+    </div>
+    <select name="class_id" class="form-control" style="max-width:160px" onchange="this.form.submit()">
+      <option value="">All Classes</option>
+      <% classes.forEach(c => { %>
+      <option value="<%= c.id %>" <%= class_id == c.id ? 'selected' : '' %>><%= c.name %></option>
+      <% }) %>
+    </select>
+    <button type="submit" class="btn btn-primary">Filter</button>
+    <a href="/admin/attendance" class="btn btn-outline">Today</a>
+  </div>
+</form>
+
+<!-- Summary Cards -->
+<div class="stats-grid" style="grid-template-columns:repeat(4,1fr);margin-bottom:20px">
+  <div class="stat-card green">
+    <div class="stat-header">
+      <div><div class="stat-value" data-counter><%= summary.present %></div><div class="stat-label">Present</div></div>
+      <div class="stat-icon">✅</div>
+    </div>
+  </div>
+  <div class="stat-card red">
+    <div class="stat-header">
+      <div><div class="stat-value" data-counter><%= summary.absent %></div><div class="stat-label">Absent</div></div>
+      <div class="stat-icon">❌</div>
+    </div>
+  </div>
+  <div class="stat-card amber">
+    <div class="stat-header">
+      <div><div class="stat-value" data-counter><%= summary.leave %></div><div class="stat-label">On Leave</div></div>
+      <div class="stat-icon">📋</div>
+    </div>
+  </div>
+  <div class="stat-card blue">
+    <div class="stat-header">
+      <div><div class="stat-value" data-counter><%= summary.notMarked %></div><div class="stat-label">Not Marked</div></div>
+      <div class="stat-icon">❔</div>
+    </div>
+  </div>
+</div>
+
+<!-- Attendance Table -->
+<div class="card">
+  <div class="card-header">
+    <div class="card-title">Student Attendance — <%= formatDate(date) %></div>
+    <span style="font-size:12px;color:#64748b"><%= records.length %> students</span>
+  </div>
+  <div class="card-body" style="padding:0">
+    <% if (records.length) { %>
+    <div class="table-wrap">
+      <table class="data-table">
+        <thead>
+          <tr>
+            <th>Admission No.</th>
+            <th>Student Name</th>
+            <% if (!class_id) { %><th>Class</th><% } %>
+            <th>Section</th>
+            <th>Status</th>
+          </tr>
+        </thead>
+        <tbody>
+        <% records.forEach(r => { %>
+        <tr>
+          <td><span class="badge badge-secondary"><%= r.admission_no %></span></td>
+          <td><strong><%= r.first_name %> <%= r.last_name %></strong></td>
+          <% if (!class_id) { %><td><%= r.class_name || '—' %></td><% } %>
+          <td><%= r.section_name || '—' %></td>
+          <td>
+            <% if (r.status === 'present') { %><span class="badge att-present">✅ Present</span>
+            <% } else if (r.status === 'absent') { %><span class="badge att-absent">❌ Absent</span>
+            <% } else if (r.status === 'leave') { %><span class="badge att-leave">📋 Leave</span>
+            <% } else { %><span class="badge att-none">— Not Marked</span>
+            <% } %>
+          </td>
+        </tr>
+        <% }) %>
+        </tbody>
+      </table>
+    </div>
+    <% } else { %>
+    <div class="empty-state">
+      <div class="empty-icon">📅</div>
+      <h3>No Records</h3>
+      <p>No attendance records for this date.</p>
+    </div>
+    <% } %>
+  </div>
+</div>

@@ -1,0 +1,91 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Login — Sacred Heart Matric Hr Sec School CRM</title>
+  <meta name="description" content="Secure login to Sacred Heart School Management System"/>
+  <link rel="preconnect" href="https://fonts.googleapis.com"/>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet"/>
+  <link rel="stylesheet" href="/css/styles.css"/>
+</head>
+<body>
+<div class="login-page">
+
+  <!-- Left Panel (decorative — hidden on small screens) -->
+  <div class="login-left" style="display:flex">
+    <div style="text-align:center;color:#fff;max-width:400px">
+      <img src="/images/logo.png" alt="Sacred Heart School Logo" class="login-left-logo"/>
+      <h1 style="font-size:26px;font-weight:800;line-height:1.3;color:#fff">Sacred Heart<br/>Matric Hr Sec School</h1>
+      <div style="font-size:14px;color:#d4a843;font-weight:700;margin-top:6px;letter-spacing:1px">ARAKKONAM · LEARN TO GROW</div>
+      <p style="font-size:14px;color:rgba(255,255,255,0.7);margin-top:14px;line-height:1.7">
+        Centralized Web CRM for Student Information,<br/>
+        Fee Collection, Attendance, and Staff Management.
+      </p>
+    </div>
+  </div>
+
+  <!-- Right Panel — Login Form -->
+  <div class="login-right">
+    <div class="login-card">
+      <div class="login-logo">
+        <img src="/images/logo.png" alt="Sacred Heart School Logo" class="login-logo-img"/>
+        <h1>Sacred Heart<br/>Matric Hr Sec School</h1>
+        <p>Arakkonam · School Management System</p>
+      </div>
+
+      <h2 class="login-title">Welcome Back</h2>
+      <p class="login-sub">Sign in to your account to continue</p>
+
+      <% if (error) { %>
+      <div class="alert alert-error" style="margin-bottom:20px">
+        ⚠️ <%= error %>
+      </div>
+      <% } %>
+
+      <form action="/login" method="POST" id="loginForm" novalidate>
+        <div class="form-group">
+          <label class="form-label" for="username">Username</label>
+          <input class="form-control" type="text" id="username" name="username"
+                 placeholder="Enter your username"
+                 autocomplete="username" required autofocus/>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label" for="password">Password</label>
+          <div style="position:relative">
+            <input class="form-control" type="password" id="password" name="password"
+                   placeholder="Enter your password"
+                   autocomplete="current-password" required/>
+            <button type="button" id="togglePwd"
+                    style="position:absolute;right:12px;top:50%;transform:translateY(-50%);background:none;border:none;cursor:pointer;color:#94a3b8;font-size:16px">👁️</button>
+          </div>
+        </div>
+
+        <button type="submit" class="btn btn-primary btn-lg" style="width:100%;margin-top:8px">
+          🔐 Sign In
+        </button>
+      </form>
+
+      <div class="login-footer">
+        <p>Need help? Contact the school administrator.</p>
+        <div style="margin-top:14px;padding:12px;background:#f0f4f8;border-radius:8px;font-size:11.5px;text-align:left">
+          <strong style="color:#64748b">Demo Credentials:</strong><br/>
+          <span style="color:#1e3a5f">Admin:</span> admin / admin123<br/>
+          <span style="color:#1e3a5f">Staff:</span> mary.joseph / staff123<br/>
+          <span style="color:#1e3a5f">Student:</span> sh001 / student123
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+  document.getElementById('togglePwd').addEventListener('click', function() {
+    const pwd = document.getElementById('password');
+    pwd.type = pwd.type === 'password' ? 'text' : 'password';
+    this.textContent = pwd.type === 'password' ? '👁️' : '🙈';
+  });
+</script>
+</body>
+</html>

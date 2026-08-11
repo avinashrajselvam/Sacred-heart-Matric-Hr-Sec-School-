@@ -1,0 +1,159 @@
+<%# Admin — Staff Attendance Overview %>
+
+<div class="page-header">
+  <div>
+    <h1 class="page-title">Staff Attendance</h1>
+    <p class="page-subtitle">GPS-verified login &amp; logout records</p>
+  </div>
+  <!-- Date Picker -->
+  <form method="GET" action="/admin/staff-attendance" style="display:flex;align-items:center;gap:10px">
+    <input type="date" name="date" value="<%= date %>"
+      max="<%= new Date().toISOString().split('T')[0] %>"
+      class="form-control" style="width:160px" id="staffAttDatePicker"
+      onchange="this.form.submit()"/>
+    <button type="submit" class="btn btn-primary btn-sm">Filter</button>
+  </form>
+</div>
+
+<style>
+  /* Summary cards */
+  .att-summary{display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:16px;margin-bottom:24px;}
+  .att-sum-card{border-radius:14px;padding:20px 22px;display:flex;flex-direction:column;gap:4px;}
+  .att-sum-card.green{background:linear-gradient(135deg,#dcfce7,#bbf7d0);border:1px solid #86efac;}
+  .att-sum-card.red  {background:linear-gradient(135deg,#fee2e2,#fecaca);border:1px solid #f87171;}
+  .att-sum-card.purple{background:linear-gradient(135deg,#ede9fe,#ddd6fe);border:1px solid #a78bfa;}
+  .att-sum-card.blue {background:linear-gradient(135deg,#dbeafe,#bfdbfe);border:1px solid #93c5fd;}
+  .att-sum-val{font-size:36px;font-weight:800;line-height:1;}
+  .att-sum-card.green .att-sum-val{color:#16a34a;}
+  .att-sum-card.red   .att-sum-val{color:#dc2626;}
+  .att-sum-card.purple .att-sum-val{color:#7c3aed;}
+  .att-sum-card.blue  .att-sum-val{color:#2563eb;}
+  .att-sum-label{font-size:13px;font-weight:600;color:#475569;margin-top:2px;}
+
+  /* Table */
+  .time-chip{display:inline-block;padding:3px 10px;border-radius:8px;font-size:12.5px;font-weight:600;}
+  .time-chip.login {background:#dcfce7;color:#16a34a;}
+  .time-chip.logout{background:#fee2e2;color:#dc2626;}
+  .time-chip.none  {background:#f1f5f9;color:#94a3b8;font-weight:400;font-style:italic;}
+  .dur-chip{display:inline-block;padding:3px 10px;border-radius:8px;font-size:12px;font-weight:700;background:#ede9fe;color:#7c3aed;}
+
+  /* Status badges */
+  .badge-present  {background:#dcfce7;color:#16a34a;}
+  .badge-absent   {background:#fee2e2;color:#dc2626;}
+  .badge-completed{background:#ede9fe;color:#7c3aed;}
+  .badge-working  {background:#fef9c3;color:#ca8a04;}
+
+  /* Row highlight */
+  .row-absent td{opacity:.65;}
+  .row-present td:first-child{border-left:3px solid #22c55e;}
+  .row-absent  td:first-child{border-left:3px solid #ef4444;}
+</style>
+
+<!-- Summary Cards -->
+<div class="att-summary">
+  <div class="att-sum-card green">
+    <div class="att-sum-val"><%= summary.present %></div>
+    <div class="att-sum-label">✅ Present Today</div>
+  </div>
+  <div class="att-sum-card red">
+    <div class="att-sum-val"><%= summary.absent %></div>
+    <div class="att-sum-label">❌ Not Punched In</div>
+  </div>
+  <div class="att-sum-card purple">
+    <div class="att-sum-val"><%= summary.loggedOut %></div>
+    <div class="att-sum-label">🚪 Punched Out</div>
+  </div>
+  <div class="att-sum-card blue">
+    <div class="att-sum-val"><%= summary.total %></div>
+    <div class="att-sum-label">👨‍🏫 Total Staff</div>
+  </div>
+</div>
+
+<!-- Attendance Table -->
+<div class="card">
+  <div class="card-header">
+    <div>
+      <div class="card-title">Attendance for <span style="color:#6366f1"><%= date %></span></div>
+      <div class="card-subtitle">All active staff — GPS-verified punches only</div>
+    </div>
+  </div>
+  <div class="card-body" style="padding:0">
+    <% if (records.length) { %>
+    <table class="data-table" id="staffAttTable">
+      <thead>
+        <tr>
+          <th>Employee</th>
+          <th>Department</th>
+          <th>Login Time</th>
+          <th>Logout Time</th>
+          <th>Duration</th>
+          <th>Status</th>
+        </tr>
+      </thead>
+      <tbody>
+      <% records.forEach(r => {
+           const loginT  = r.login_time  ? new Date(r.login_time)  : null;
+           const logoutT = r.logout_time ? new Date(r.logout_time) : null;
+           let durStr = null;
+           if (loginT && logoutT) {
+             const m = Math.round((logoutT - loginT) / 60000);
+             durStr = Math.floor(m/60)+'h '+(m%60)+'m';
+           }
+           const rowClass = loginT ? 'row-present' : 'row-absent';
+      %>
+      <tr class="<%= rowClass %>">
+        <td>
+          <div style="font-weight:700;font-size:14px"><%= r.first_name %> <%= r.last_name %></div>
+          <div style="font-size:12px;color:#64748b"><%= r.employee_id %> · <%= r.designation || '—' %></div>
+        </td>
+        <td style="color:#64748b;font-size:13px"><%= r.department || '—' %></td>
+        <td>
+          <% if (loginT) { %>
+            <span class="time-chip login">
+              <%= loginT.toLocaleTimeString('en-IN',{hour:'2-digit',minute:'2-digit',second:'2-digit',hour12:true}) %>
+            </span>
+          <% } else { %>
+            <span class="time-chip none">Not punched in</span>
+          <% } %>
+        </td>
+        <td>
+          <% if (logoutT) { %>
+            <span class="time-chip logout">
+              <%= logoutT.toLocaleTimeString('en-IN',{hour:'2-digit',minute:'2-digit',second:'2-digit',hour12:true}) %>
+            </span>
+          <% } else if (loginT) { %>
+            <span class="time-chip none">Still working</span>
+          <% } else { %>
+            <span class="time-chip none">—</span>
+          <% } %>
+        </td>
+        <td>
+          <% if (durStr) { %>
+            <span class="dur-chip">⏱ <%= durStr %></span>
+          <% } else if (loginT) { %>
+            <span style="font-size:12px;color:#64748b;font-style:italic">In progress…</span>
+          <% } else { %>
+            <span style="color:#94a3b8">—</span>
+          <% } %>
+        </td>
+        <td>
+          <% if (loginT && logoutT) { %>
+            <span class="badge badge-completed">Completed</span>
+          <% } else if (loginT) { %>
+            <span class="badge badge-working">Working</span>
+          <% } else { %>
+            <span class="badge badge-absent">Absent</span>
+          <% } %>
+        </td>
+      </tr>
+      <% }) %>
+      </tbody>
+    </table>
+    <% } else { %>
+    <div class="empty-state">
+      <div class="empty-icon">📋</div>
+      <p>No staff found</p>
+    </div>
+    <% } %>
+  </div>
+</div>

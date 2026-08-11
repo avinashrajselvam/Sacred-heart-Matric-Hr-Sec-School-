@@ -1,0 +1,194 @@
+<!-- Admin Dashboard -->
+<div class="page-header">
+  <div>
+    <h1 class="page-title">Admin Dashboard</h1>
+    <p class="page-subtitle">Welcome back, <%= user.displayName %> — <%= new Date().toLocaleDateString('en-IN',{weekday:'long',day:'2-digit',month:'long',year:'numeric'}) %></p>
+  </div>
+  <div style="display:flex;gap:10px">
+    <a href="/admin/students/new" class="btn btn-primary btn-sm">+ Add Student</a>
+    <a href="/fees/collect" class="btn btn-accent btn-sm">💳 Collect Fee</a>
+  </div>
+</div>
+
+<!-- Stat Cards -->
+<div class="stats-grid">
+  <div class="stat-card blue">
+    <div class="stat-header">
+      <div><div class="stat-value" data-counter><%= totalStudents %></div><div class="stat-label">Total Students</div></div>
+      <div class="stat-icon">👨‍🎓</div>
+    </div>
+    <a href="/admin/students" style="font-size:12px;color:#3b82f6">View all students →</a>
+  </div>
+  <div class="stat-card green">
+    <div class="stat-header">
+      <div><div class="stat-value" data-counter><%= totalStaff %></div><div class="stat-label">Total Staff</div></div>
+      <div class="stat-icon">👨‍🏫</div>
+    </div>
+    <a href="/admin/staff" style="font-size:12px;color:#22c55e">View all staff →</a>
+  </div>
+  <div class="stat-card amber">
+    <div class="stat-header">
+      <div><div class="stat-value">₹<%= (totalFeesCol/1000).toFixed(1) %>K</div><div class="stat-label">Total Fees Collected</div></div>
+      <div class="stat-icon">💰</div>
+    </div>
+    <div class="stat-change up">₹<%= formatCurrency(todayFees) %> today</div>
+  </div>
+  <div class="stat-card red">
+    <div class="stat-header">
+      <div><div class="stat-value">₹<%= (pendingFees/1000).toFixed(1) %>K</div><div class="stat-label">Pending / Balance Fees</div></div>
+      <div class="stat-icon">⚠️</div>
+    </div>
+    <a href="/fees/pending" style="font-size:12px;color:#ef4444">View pending →</a>
+  </div>
+  <div class="stat-card green">
+    <div class="stat-header">
+      <div><div class="stat-value" data-counter><%= presentToday %></div><div class="stat-label">Present Today</div></div>
+      <div class="stat-icon">✅</div>
+    </div>
+    <div class="stat-change down"><%= absentToday %> absent today</div>
+  </div>
+  <div class="stat-card purple">
+    <div class="stat-header">
+      <div><div class="stat-value" data-counter><%= totalClasses %></div><div class="stat-label">Classes</div></div>
+      <div class="stat-icon">🏛️</div>
+    </div>
+    <a href="/admin/classes" style="font-size:12px;color:#8b5cf6">Manage classes →</a>
+  </div>
+</div>
+
+<!-- Charts Row -->
+<div class="grid-21" style="margin-bottom:20px">
+  <!-- Fee Collection Chart -->
+  <div class="card">
+    <div class="card-header">
+      <div><div class="card-title">Monthly Fee Collection</div><div class="card-subtitle">Last 6 months trend</div></div>
+    </div>
+    <div class="card-body">
+      <div class="chart-container" style="height:220px">
+        <canvas id="feeChart" width="600" height="220"></canvas>
+      </div>
+    </div>
+  </div>
+
+  <!-- Attendance Donut -->
+  <div class="card">
+    <div class="card-header">
+      <div class="card-title">Today's Attendance</div>
+    </div>
+    <div class="card-body">
+      <div class="donut-wrap">
+        <canvas id="attDonut" width="160" height="160"></canvas>
+        <div class="donut-legend">
+          <div class="legend-item"><div class="legend-dot" style="background:#22c55e"></div> Present (<%= presentToday %>)</div>
+          <div class="legend-item"><div class="legend-dot" style="background:#ef4444"></div> Absent (<%= absentToday %>)</div>
+          <div class="legend-item"><div class="legend-dot" style="background:#94a3b8"></div> Not Marked (<%= totalStudents - presentToday - absentToday %>)</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Bottom Row -->
+<div class="grid-2" style="margin-bottom:20px">
+  <!-- Class-wise Students -->
+  <div class="card">
+    <div class="card-header">
+      <div class="card-title">Class-wise Students</div>
+      <a href="/admin/students" class="btn btn-ghost btn-sm">View all</a>
+    </div>
+    <div class="card-body" style="padding:0">
+      <div style="max-height:280px;overflow-y:auto">
+        <table class="data-table">
+          <thead><tr><th>Class</th><th>Students</th><th></th></tr></thead>
+          <tbody>
+          <% classWise.filter(c=>c.count>0).slice(0,12).forEach(c => { %>
+          <tr>
+            <td><strong><%= c.name %></strong></td>
+            <td><span class="badge badge-info"><%= c.count %></span></td>
+            <td>
+              <div class="progress-bar-bg" style="width:80px">
+                <div class="progress-bar-fill green" style="width:<%= Math.min(100,(c.count/Math.max(...classWise.map(x=>x.count),1))*100) %>%"></div>
+              </div>
+            </td>
+          </tr>
+          <% }) %>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <!-- Recent Payments -->
+  <div class="card">
+    <div class="card-header">
+      <div class="card-title">Recent Payments</div>
+      <a href="/fees/history" class="btn btn-ghost btn-sm">View all</a>
+    </div>
+    <div class="card-body" style="padding:0">
+      <% if (recentPayments.length) { %>
+      <table class="data-table">
+        <thead><tr><th>Student</th><th>Amount</th><th>Date</th></tr></thead>
+        <tbody>
+        <% recentPayments.forEach(p => { %>
+        <tr>
+          <td>
+            <div style="font-weight:600;font-size:13px"><%= p.first_name %> <%= p.last_name %></div>
+            <div style="font-size:11.5px;color:#94a3b8"><%= p.admission_no %> | <%= p.class_name || '' %></div>
+          </td>
+          <td><strong style="color:#22c55e"><%= formatCurrency(p.amount_paid) %></strong></td>
+          <td style="font-size:12px;color:#64748b"><%= formatDate(p.payment_date) %></td>
+        </tr>
+        <% }) %>
+        </tbody>
+      </table>
+      <% } else { %>
+      <div class="empty-state"><div class="empty-icon">🧾</div><p>No recent payments</p></div>
+      <% } %>
+    </div>
+  </div>
+</div>
+
+<!-- Recent Activity -->
+<div class="card">
+  <div class="card-header">
+    <div class="card-title">Recent Activity Log</div>
+  </div>
+  <div class="card-body">
+    <% if (recentActivity.length) { %>
+    <div class="activity-feed">
+      <% recentActivity.forEach(a => { %>
+      <div class="activity-item">
+        <div class="activity-dot"></div>
+        <div class="activity-text">
+          <strong><%= a.action.replace(/_/g,' ') %></strong>
+          <% if (a.details) { %> — <%= a.details %><% } %>
+          <div class="activity-meta">by <%= a.username || 'System' %> · <%= formatDate(a.created_at) %></div>
+        </div>
+      </div>
+      <% }) %>
+    </div>
+    <% } else { %>
+    <div class="empty-state"><div class="empty-icon">📋</div><p>No activity yet</p></div>
+    <% } %>
+  </div>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', () => {
+  // Fee chart
+  const feeLabels = <%- JSON.stringify(monthlyFees.map(m => m.month)) %>;
+  const feeData   = <%- JSON.stringify(monthlyFees.map(m => m.total || 0)) %>;
+  SchoolCharts.drawBarChart('feeChart', feeLabels, [{ label:'Fee Collected', data: feeData, color:'#d4a843' }]);
+
+  // Attendance donut
+  const present = <%= presentToday %>;
+  const absent  = <%= absentToday %>;
+  const notMkd  = <%= totalStudents %> - present - absent;
+  SchoolCharts.drawDonutChart('attDonut',
+    ['Present','Absent','Not Marked'],
+    [Math.max(present,0), Math.max(absent,0), Math.max(notMkd,0)],
+    ['#22c55e','#ef4444','#94a3b8'],
+    `${present}\nPresent`
+  );
+});
+</script>

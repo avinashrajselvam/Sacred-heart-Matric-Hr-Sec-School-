@@ -1,0 +1,78 @@
+<!-- Announcements Management -->
+<div class="page-header">
+  <div>
+    <h1 class="page-title">Announcements</h1>
+    <p class="page-subtitle">Post and manage school announcements</p>
+  </div>
+  <button class="btn btn-primary" onclick="document.getElementById('addAnnouncementModal').classList.add('show')">+ Post Announcement</button>
+</div>
+
+<!-- Announcements List -->
+<% if (announcements.length) { %>
+<div style="display:flex;flex-direction:column;gap:14px">
+<% announcements.forEach(a => { %>
+<div class="card" style="<%= !a.is_active ? 'opacity:0.5' : '' %>">
+  <div class="card-header">
+    <div>
+      <div class="card-title" style="font-size:16px"><%= a.title %></div>
+      <div style="display:flex;gap:8px;margin-top:4px">
+        <span class="badge <%= a.target_audience==='all' ? 'badge-info' : a.target_audience==='students' ? 'badge-success' : 'badge-warning' %>">
+          <%= a.target_audience === 'all' ? '🌐 All' : a.target_audience === 'students' ? '👨‍🎓 Students' : '👨‍🏫 Staff' %>
+        </span>
+        <span style="font-size:12px;color:#94a3b8"><%= formatDate(a.created_at) %></span>
+        <% if (a.created_by_name) { %><span style="font-size:12px;color:#94a3b8">by <%= a.created_by_name %></span><% } %>
+      </div>
+    </div>
+    <form method="POST" action="/admin/announcements/<%= a.id %>/delete"
+          data-confirm="Remove this announcement?">
+      <button type="submit" class="btn btn-ghost btn-sm">🗑️</button>
+    </form>
+  </div>
+  <div class="card-body">
+    <p style="font-size:14px;line-height:1.7;color:#475569"><%= a.content %></p>
+  </div>
+</div>
+<% }) %>
+</div>
+<% } else { %>
+<div class="empty-state">
+  <div class="empty-icon">📢</div>
+  <h3>No Announcements</h3>
+  <p>Post your first announcement.</p>
+</div>
+<% } %>
+
+<!-- Add Announcement Modal -->
+<div class="modal-overlay" id="addAnnouncementModal">
+  <div class="modal">
+    <div class="modal-header">
+      <span class="modal-title">Post Announcement</span>
+      <button class="modal-close" onclick="document.getElementById('addAnnouncementModal').classList.remove('show')">✕</button>
+    </div>
+    <form method="POST" action="/admin/announcements">
+      <div class="modal-body">
+        <div class="form-group">
+          <label class="form-label">Title <span class="required">*</span></label>
+          <input type="text" name="title" class="form-control" required placeholder="Announcement title"/>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Message <span class="required">*</span></label>
+          <textarea name="content" class="form-control" rows="4" required
+                    placeholder="Enter announcement details…" style="resize:vertical"></textarea>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Audience</label>
+          <select name="target_audience" class="form-control">
+            <option value="all">🌐 All (Students + Staff)</option>
+            <option value="students">👨‍🎓 Students Only</option>
+            <option value="staff">👨‍🏫 Staff Only</option>
+          </select>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-outline" onclick="document.getElementById('addAnnouncementModal').classList.remove('show')">Cancel</button>
+        <button type="submit" class="btn btn-primary">📢 Post Announcement</button>
+      </div>
+    </form>
+  </div>
+</div>

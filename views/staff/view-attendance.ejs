@@ -1,0 +1,63 @@
+<!-- View Attendance -->
+<div class="page-header">
+  <div>
+    <h1 class="page-title">Class Attendance Records</h1>
+    <p class="page-subtitle"><%= staffInfo.class_name || 'Class' %> — Section <%= staffInfo.section_name || 'A' %> | Month: <%= month %></p>
+  </div>
+  <a href="/staff/attendance/mark" class="btn btn-primary">✏️ Mark Attendance</a>
+</div>
+
+<!-- Month Selection -->
+<form method="GET" action="/staff/attendance/view" style="margin-bottom:20px">
+  <div class="search-bar">
+    <div style="display:flex;align-items:center;gap:10px">
+      <label class="form-label" style="margin:0">Select Month:</label>
+      <input type="month" name="month" class="form-control" value="<%= month %>" style="max-width:200px" onchange="this.form.submit()"/>
+    </div>
+  </div>
+</form>
+
+<!-- Pivot Table -->
+<div class="card">
+  <div class="card-body" style="padding:0">
+    <% if (dates.length && students.length) { %>
+    <div class="table-wrap">
+      <table class="data-table att-pivot-table">
+        <thead>
+          <tr>
+            <th>Student Name</th>
+            <% dates.forEach(d => { %>
+            <th style="font-size:10px;text-align:center"><%= d.slice(8) %></th>
+            <% }) %>
+          </tr>
+        </thead>
+        <tbody>
+        <% students.forEach(s => { %>
+        <tr>
+          <td style="font-weight:600;white-space:nowrap"><%= s.first_name %> <%= s.last_name %></td>
+          <% dates.forEach(d => {
+             const st = pivot[s.id] && pivot[s.id][d];
+             const code = st === 'present' ? 'P' : st === 'absent' ? 'A' : st === 'leave' ? 'L' : '-';
+          %>
+          <td><span class="att-dot <%= code %>"><%= code %></span></td>
+          <% }) %>
+        </tr>
+        <% }) %>
+        </tbody>
+      </table>
+    </div>
+    <div style="padding:14px 20px;background:#fafbfc;border-top:1px solid #e2e8f0;display:flex;gap:20px;font-size:12px">
+      <span style="display:flex;align-items:center;gap:6px"><span class="att-dot P">P</span> Present</span>
+      <span style="display:flex;align-items:center;gap:6px"><span class="att-dot A">A</span> Absent</span>
+      <span style="display:flex;align-items:center;gap:6px"><span class="att-dot L">L</span> Leave</span>
+      <span style="display:flex;align-items:center;gap:6px"><span class="att-dot -">-</span> Not Recorded</span>
+    </div>
+    <% } else { %>
+    <div class="empty-state">
+      <div class="empty-icon">📅</div>
+      <h3>No Records</h3>
+      <p>No attendance records for <%= month %>.</p>
+    </div>
+    <% } %>
+  </div>
+</div>

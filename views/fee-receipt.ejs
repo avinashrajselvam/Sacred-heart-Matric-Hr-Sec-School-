@@ -1,0 +1,89 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Fee Receipt <%= payment.receipt_number %> — Sacred Heart School</title>
+  <link rel="stylesheet" href="/css/styles.css"/>
+  <style>
+    body { background: #f0f4f8; padding: 20px 0; }
+  </style>
+</head>
+<body>
+
+<div class="receipt-page">
+  <div style="margin-bottom:16px;display:flex;justify-content:space-between;align-items:center" class="no-print">
+    <a href="/fees/collect" class="btn btn-outline">← Back to Fee Collection</a>
+    <div style="display:flex;gap:10px">
+      <button class="btn btn-primary" onclick="window.print()">🖨️ Print Receipt</button>
+      <a href="/fees/receipt/<%= payment.receipt_number %>/pdf" class="btn btn-accent" target="_blank">📄 Download PDF</a>
+    </div>
+  </div>
+
+  <% if (typeof success !== 'undefined' && success) { %>
+  <div class="alert alert-success no-print" style="margin-bottom:16px">
+    ✅ Payment recorded successfully! Receipt #<%= payment.receipt_number %> generated.
+  </div>
+  <% } %>
+
+  <div class="receipt-card">
+    <div class="receipt-header" style="text-align:center">
+      <img src="/images/logo.png" alt="Sacred Heart Logo" class="receipt-logo-img"/>
+      <h2>Sacred Heart Matric Hr Sec School</h2>
+      <p>Arakkonam — Phone: 00000 00000</p>
+      <div class="receipt-tag">OFFICIAL FEE RECEIPT</div>
+    </div>
+
+    <div class="receipt-meta">
+      <div>Receipt No: <strong><%= payment.receipt_number %></strong></div>
+      <div>Date: <strong><%= formatDate(payment.payment_date) %></strong></div>
+    </div>
+
+    <div class="receipt-body">
+      <div class="receipt-row">
+        <span class="label">Student Name:</span>
+        <span class="value"><%= student.first_name %> <%= student.last_name %></span>
+      </div>
+      <div class="receipt-row">
+        <span class="label">Admission Number:</span>
+        <span class="value"><%= student.admission_no %></span>
+      </div>
+      <div class="receipt-row">
+        <span class="label">Class & Section:</span>
+        <span class="value"><%= student.class_name || '' %><% if(student.section_name) { %> — Section <%= student.section_name %><% } %></span>
+      </div>
+      <div class="receipt-row">
+        <span class="label">Parent / Guardian:</span>
+        <span class="value"><%= student.parent_name || '—' %></span>
+      </div>
+      <div class="receipt-row">
+        <span class="label">Fee Description:</span>
+        <span class="value"><%= feeStructure ? feeStructure.fee_name : 'Fee Payment' %></span>
+      </div>
+      <div class="receipt-row">
+        <span class="label">Payment Method:</span>
+        <span class="value"><%= payment.payment_method %></span>
+      </div>
+      <% if (payment.remarks) { %>
+      <div class="receipt-row">
+        <span class="label">Remarks:</span>
+        <span class="value"><%= payment.remarks %></span>
+      </div>
+      <% } %>
+    </div>
+
+    <div class="receipt-total">
+      <span>AMOUNT PAID:</span>
+      <span><%= formatCurrency(payment.amount_paid) %></span>
+    </div>
+
+    <div class="receipt-footer">
+      <p>This is a computer-generated fee receipt. No physical signature required.</p>
+      <p style="margin-top:4px">Collected by: <%= payment.collected_by_name || 'Admin' %></p>
+      <div style="margin-top:12px;font-weight:700;color:#1e3a5f">Thank you for your prompt payment!</div>
+    </div>
+  </div>
+</div>
+
+</body>
+</html>

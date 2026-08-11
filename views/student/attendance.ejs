@@ -1,0 +1,77 @@
+<!-- Student Attendance Page -->
+<div class="page-header">
+  <div>
+    <h1 class="page-title">My Attendance Record</h1>
+    <p class="page-subtitle">Month: <%= month %></p>
+  </div>
+</div>
+
+<!-- Attendance Stats -->
+<div class="stats-grid" style="grid-template-columns:repeat(4,1fr);margin-bottom:20px">
+  <div class="stat-card blue">
+    <div class="stat-header">
+      <div><div class="stat-value"><%= percentage %>%</div><div class="stat-label">Attendance Rate</div></div>
+      <div class="stat-icon">📊</div>
+    </div>
+  </div>
+  <div class="stat-card green">
+    <div class="stat-header">
+      <div><div class="stat-value"><%= summary.present %></div><div class="stat-label">Days Present</div></div>
+      <div class="stat-icon">✅</div>
+    </div>
+  </div>
+  <div class="stat-card red">
+    <div class="stat-header">
+      <div><div class="stat-value"><%= summary.absent %></div><div class="stat-label">Days Absent</div></div>
+      <div class="stat-icon">❌</div>
+    </div>
+  </div>
+  <div class="stat-card amber">
+    <div class="stat-header">
+      <div><div class="stat-value"><%= summary.leave %></div><div class="stat-label">Days on Leave</div></div>
+      <div class="stat-icon">📋</div>
+    </div>
+  </div>
+</div>
+
+<!-- Month Selector -->
+<div class="card" style="margin-bottom:20px">
+  <div class="card-body" style="padding:14px 22px">
+    <form method="GET" action="/student/attendance" style="display:flex;align-items:center;gap:12px">
+      <label class="form-label" style="margin:0">Select Month:</label>
+      <input type="month" name="month" class="form-control" value="<%= month %>" style="max-width:200px" onchange="this.form.submit()"/>
+    </form>
+  </div>
+</div>
+
+<!-- Attendance Log -->
+<div class="card">
+  <div class="card-header"><div class="card-title">📅 Daily Attendance Log for <%= month %></div></div>
+  <div class="card-body" style="padding:0">
+    <% if (attendance.length) { %>
+    <table class="data-table">
+      <thead><tr><th>Date</th><th>Status</th><th>Remarks</th></tr></thead>
+      <tbody>
+      <% attendance.forEach(a => { %>
+      <tr>
+        <td><strong><%= formatDate(a.date) %></strong></td>
+        <td>
+          <% if(a.status==='present'){ %><span class="badge att-present">✅ Present</span>
+          <% }else if(a.status==='absent'){ %><span class="badge att-absent">❌ Absent</span>
+          <% }else if(a.status==='leave'){ %><span class="badge att-leave">📋 Leave</span>
+          <% }else{ %><span class="badge att-none">—</span><% } %>
+        </td>
+        <td style="font-size:12.5px;color:#64748b"><%= a.remarks || '—' %></td>
+      </tr>
+      <% }) %>
+      </tbody>
+    </table>
+    <% } else { %>
+    <div class="empty-state">
+      <div class="empty-icon">📅</div>
+      <h3>No Records</h3>
+      <p>No attendance recorded for <%= month %>.</p>
+    </div>
+    <% } %>
+  </div>
+</div>

@@ -1,0 +1,159 @@
+<!-- Fee Collection -->
+<div class="page-header">
+  <div>
+    <h1 class="page-title">Fee Collection</h1>
+    <p class="page-subtitle">Record student fee payments</p>
+  </div>
+  <div style="display:flex;gap:10px">
+    <a href="/fees/pending" class="btn btn-outline">⚠️ Pending List</a>
+    <a href="/fees/history" class="btn btn-outline">🧾 Payment History</a>
+  </div>
+</div>
+
+<!-- Student Search -->
+<div class="card" style="margin-bottom:20px">
+  <div class="card-header"><div class="card-title">🔍 Find Student</div></div>
+  <div class="card-body">
+    <div style="position:relative">
+      <div class="search-input-wrap">
+        <span class="search-icon">🔍</span>
+        <input type="text" id="studentSearchInput" class="form-control"
+               placeholder="Type student name, admission number, or parent phone…"
+               value="<%= student ? student.first_name + ' ' + student.last_name : '' %>"
+               autocomplete="off"/>
+      </div>
+      <div id="studentSearchResults"></div>
+    </div>
+    <p class="form-text">Search and select a student to load their fee details.</p>
+  </div>
+</div>
+
+<% if (student) { %>
+<!-- Student Info -->
+<div class="grid-12" style="margin-bottom:20px">
+  <div class="card">
+    <div class="card-header"><div class="card-title">👤 Student Details</div></div>
+    <div class="card-body">
+      <div class="info-list">
+        <div class="info-item">
+          <span class="info-icon">🎓</span>
+          <div><div class="info-label">Admission No.</div><div class="info-value"><%= student.admission_no %></div></div>
+        </div>
+        <div class="info-item">
+          <span class="info-icon">👤</span>
+          <div><div class="info-label">Name</div><div class="info-value"><%= student.first_name %> <%= student.last_name %></div></div>
+        </div>
+        <div class="info-item">
+          <span class="info-icon">🏛️</span>
+          <div><div class="info-label">Class / Section</div><div class="info-value"><%= student.class_name || '—' %><% if(student.section_name) { %> — Sec <%= student.section_name %><% } %></div></div>
+        </div>
+        <div class="info-item">
+          <span class="info-icon">📞</span>
+          <div><div class="info-label">Parent Phone</div><div class="info-value"><%= student.parent_phone || '—' %></div></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Fee Summary -->
+  <div class="card">
+    <div class="card-header"><div class="card-title">💰 Fee Summary</div></div>
+    <div class="card-body">
+      <div style="display:flex;flex-direction:column;gap:14px">
+        <div style="display:flex;justify-content:space-between;align-items:center;padding:12px;background:#f0f4f8;border-radius:8px">
+          <span style="font-size:13px;color:#64748b">Total Fee</span>
+          <strong style="font-size:16px"><%= formatCurrency(totalFee) %></strong>
+        </div>
+        <div style="display:flex;justify-content:space-between;align-items:center;padding:12px;background:#dcfce7;border-radius:8px">
+          <span style="font-size:13px;color:#15803d">Amount Paid</span>
+          <strong style="font-size:16px;color:#15803d"><%= formatCurrency(totalPaid) %></strong>
+        </div>
+        <div style="display:flex;justify-content:space-between;align-items:center;padding:12px;background:<%= balance > 0 ? '#fee2e2' : '#dcfce7' %>;border-radius:8px">
+          <span style="font-size:13px;color:<%= balance > 0 ? '#b91c1c' : '#15803d' %>">Balance Due</span>
+          <strong style="font-size:18px;color:<%= balance > 0 ? '#b91c1c' : '#15803d' %>"><%= formatCurrency(balance) %></strong>
+        </div>
+        <div class="progress-bar-bg">
+          <div class="progress-bar-fill <%= totalFee > 0 && (totalPaid/totalFee) < 0.5 ? 'red' : totalFee > 0 && (totalPaid/totalFee) < 1 ? 'amber' : 'green' %>"
+               style="width:<%= totalFee > 0 ? Math.min(100,(totalPaid/totalFee)*100) : 0 %>%"></div>
+        </div>
+        <div style="font-size:11.5px;color:#64748b;text-align:center"><%= totalFee > 0 ? Math.round((totalPaid/totalFee)*100) : 0 %>% paid</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Collect Payment Form -->
+<div class="card" style="margin-bottom:20px">
+  <div class="card-header"><div class="card-title">💳 Record Payment</div></div>
+  <div class="card-body">
+    <form method="POST" action="/fees/collect">
+      <input type="hidden" name="student_id" value="<%= student.id %>"/>
+      <div class="form-row cols-3">
+        <div class="form-group">
+          <label class="form-label">Fee Type</label>
+          <select name="fee_structure_id" class="form-control">
+            <option value="">-- General Payment --</option>
+            <% feeStructures.forEach(f => { %>
+            <option value="<%= f.id %>"><%= f.fee_name %> (<%= formatCurrency(f.amount) %>)</option>
+            <% }) %>
+          </select>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Amount <span class="required">*</span></label>
+          <input type="number" name="amount_paid" class="form-control" required
+                 min="1" step="0.01" placeholder="Enter amount"
+                 value="<%= balance > 0 ? balance : '' %>"/>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Payment Method</label>
+          <select name="payment_method" class="form-control">
+            <option value="Cash">Cash</option>
+            <option value="Cheque">Cheque</option>
+            <option value="Online">Online Transfer</option>
+            <option value="DD">Demand Draft</option>
+            <option value="Card">Card</option>
+          </select>
+        </div>
+      </div>
+      <div class="form-row cols-2">
+        <div class="form-group">
+          <label class="form-label">Payment Date</label>
+          <input type="date" name="payment_date" class="form-control" value="<%= today %>"/>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Remarks</label>
+          <input type="text" name="remarks" class="form-control" placeholder="Optional remarks"/>
+        </div>
+      </div>
+      <button type="submit" class="btn btn-success btn-lg">✅ Record Payment & Generate Receipt</button>
+    </form>
+  </div>
+</div>
+
+<!-- Payment History -->
+<% if (payments.length) { %>
+<div class="card">
+  <div class="card-header"><div class="card-title">🧾 Payment History</div></div>
+  <div class="card-body" style="padding:0">
+    <table class="data-table">
+      <thead><tr><th>Receipt No.</th><th>Fee Type</th><th>Amount</th><th>Method</th><th>Date</th><th>Action</th></tr></thead>
+      <tbody>
+      <% payments.forEach(p => { %>
+      <tr>
+        <td><span class="badge badge-secondary"><%= p.receipt_number %></span></td>
+        <td><%= p.fee_name || 'General Payment' %></td>
+        <td><strong style="color:#22c55e"><%= formatCurrency(p.amount_paid) %></strong></td>
+        <td><span class="badge badge-info"><%= p.payment_method %></span></td>
+        <td><%= formatDate(p.payment_date) %></td>
+        <td>
+          <a href="/fees/receipt/<%= p.receipt_number %>" class="btn btn-ghost btn-sm" target="_blank">🧾 View</a>
+          <a href="/fees/receipt/<%= p.receipt_number %>/pdf" class="btn btn-ghost btn-sm" target="_blank">📄 PDF</a>
+        </td>
+      </tr>
+      <% }) %>
+      </tbody>
+    </table>
+  </div>
+</div>
+<% } %>
+<% } %>

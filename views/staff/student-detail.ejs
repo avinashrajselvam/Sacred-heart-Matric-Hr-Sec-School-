@@ -1,0 +1,99 @@
+<!-- Staff View Student Detail -->
+<div class="page-header">
+  <div>
+    <h1 class="page-title"><%= student.first_name %> <%= student.last_name %></h1>
+    <p class="page-subtitle">Admission No: <%= student.admission_no %> | Class: <%= student.class_name %> — Sec <%= student.section_name %></p>
+  </div>
+  <a href="/staff/students" class="btn btn-outline">← Back to Class Roster</a>
+</div>
+
+<!-- Overview Stats -->
+<div class="stats-grid" style="grid-template-columns:repeat(4,1fr);margin-bottom:20px">
+  <div class="stat-card blue">
+    <div class="stat-header">
+      <div><div class="stat-value"><%= percentage %>%</div><div class="stat-label">Attendance Rate</div></div>
+      <div class="stat-icon">📊</div>
+    </div>
+  </div>
+  <div class="stat-card green">
+    <div class="stat-header">
+      <div><div class="stat-value"><%= summary.present %></div><div class="stat-label">Days Present</div></div>
+      <div class="stat-icon">✅</div>
+    </div>
+  </div>
+  <div class="stat-card red">
+    <div class="stat-header">
+      <div><div class="stat-value"><%= summary.absent %></div><div class="stat-label">Days Absent</div></div>
+      <div class="stat-icon">❌</div>
+    </div>
+  </div>
+  <div class="stat-card amber">
+    <div class="stat-header">
+      <div><div class="stat-value"><%= formatCurrency(totalPaid) %></div><div class="stat-label">Fee Amount Paid</div></div>
+      <div class="stat-icon">💰</div>
+    </div>
+    <div class="stat-change">Total: <%= formatCurrency(totalFee) %></div>
+  </div>
+</div>
+
+<div class="grid-2">
+  <!-- Student & Parent Information -->
+  <div class="card">
+    <div class="card-header"><div class="card-title">👤 Personal & Parent Details</div></div>
+    <div class="card-body">
+      <div class="info-list">
+        <div class="info-item">
+          <span class="info-icon">👨‍👩‍👧</span>
+          <div><div class="info-label">Parent / Guardian Name</div><div class="info-value"><%= student.parent_name || '—' %></div></div>
+        </div>
+        <div class="info-item">
+          <span class="info-icon">📞</span>
+          <div><div class="info-label">Contact Phone</div><div class="info-value"><%= student.parent_phone || '—' %></div></div>
+        </div>
+        <div class="info-item">
+          <span class="info-icon">✉️</span>
+          <div><div class="info-label">Parent Email</div><div class="info-value"><%= student.parent_email || '—' %></div></div>
+        </div>
+        <div class="info-item">
+          <span class="info-icon">🎂</span>
+          <div><div class="info-label">Date of Birth</div><div class="info-value"><%= formatDate(student.date_of_birth) %></div></div>
+        </div>
+        <div class="info-item">
+          <span class="info-icon">🩸</span>
+          <div><div class="info-label">Blood Group</div><div class="info-value"><%= student.blood_group || '—' %></div></div>
+        </div>
+        <div class="info-item">
+          <span class="info-icon">🏠</span>
+          <div><div class="info-label">Address</div><div class="info-value"><%= student.address || '—' %></div></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Recent Attendance History -->
+  <div class="card">
+    <div class="card-header"><div class="card-title">📅 Recent Attendance Log</div></div>
+    <div class="card-body" style="padding:0">
+      <% if (recentAtt.length) { %>
+      <table class="data-table">
+        <thead><tr><th>Date</th><th>Status</th></tr></thead>
+        <tbody>
+        <% recentAtt.forEach(a => { %>
+        <tr>
+          <td><%= formatDate(a.date) %></td>
+          <td>
+            <% if(a.status==='present'){ %><span class="badge att-present">✅ Present</span>
+            <% }else if(a.status==='absent'){ %><span class="badge att-absent">❌ Absent</span>
+            <% }else if(a.status==='leave'){ %><span class="badge att-leave">📋 Leave</span>
+            <% }else{ %><span class="badge att-none">—</span><% } %>
+          </td>
+        </tr>
+        <% }) %>
+        </tbody>
+      </table>
+      <% } else { %>
+      <div class="empty-state"><p>No attendance records found.</p></div>
+      <% } %>
+    </div>
+  </div>
+</div>

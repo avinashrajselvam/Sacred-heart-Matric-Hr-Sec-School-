@@ -1,0 +1,106 @@
+<!-- Students List -->
+<div class="page-header">
+  <div>
+    <h1 class="page-title">Students</h1>
+    <p class="page-subtitle"><%= total %> student<%= total !== 1 ? 's' : '' %> found</p>
+  </div>
+  <a href="/admin/students/new" class="btn btn-primary">+ Add Student</a>
+</div>
+
+<!-- Search & Filters -->
+<form method="GET" action="/admin/students" id="filterForm">
+  <div class="search-bar">
+    <div class="search-input-wrap" style="flex:2;min-width:240px">
+      <span class="search-icon">🔍</span>
+      <input type="text" name="search" class="form-control search-form-input"
+             placeholder="Search by name, admission no, phone…" value="<%= search %>"/>
+    </div>
+    <select name="class_id" class="form-control" style="max-width:160px" onchange="this.form.submit()">
+      <option value="">All Classes</option>
+      <% classes.forEach(c => { %>
+      <option value="<%= c.id %>" <%= class_id == c.id ? 'selected' : '' %>><%= c.name %></option>
+      <% }) %>
+    </select>
+    <select name="section_id" class="form-control" style="max-width:130px" onchange="this.form.submit()">
+      <option value="">All Sections</option>
+      <% sections.forEach(s => { %>
+      <option value="<%= s.id %>" <%= section_id == s.id ? 'selected' : '' %>>Section <%= s.name %></option>
+      <% }) %>
+    </select>
+    <select name="status" class="form-control" style="max-width:130px" onchange="this.form.submit()">
+      <option value="1" <%= status == '1' ? 'selected' : '' %>>Active</option>
+      <option value="0" <%= status == '0' ? 'selected' : '' %>>Inactive</option>
+    </select>
+    <a href="/admin/students" class="btn btn-outline">Clear</a>
+  </div>
+</form>
+
+<!-- Students Table -->
+<div class="card">
+  <div class="card-body" style="padding:0">
+    <% if (students.length) { %>
+    <div class="table-wrap">
+      <table class="data-table">
+        <thead>
+          <tr>
+            <th>Admission No.</th>
+            <th>Student Name</th>
+            <th>Class / Section</th>
+            <th>Parent / Guardian</th>
+            <th>Contact</th>
+            <th>Joined</th>
+            <th>Status</th>
+            <th>Actions</th>
+          </tr>
+        </thead>
+        <tbody>
+        <% students.forEach(s => { %>
+        <tr>
+          <td><span class="badge badge-info"><%= s.admission_no %></span></td>
+          <td>
+            <div style="font-weight:600"><%= s.first_name %> <%= s.last_name %></div>
+            <div style="font-size:11.5px;color:#94a3b8"><%= s.gender || '' %><% if(s.date_of_birth) { %> · <%= formatDate(s.date_of_birth) %><% } %></div>
+          </td>
+          <td>
+            <% if (s.class_name) { %><span class="badge badge-secondary"><%= s.class_name %><% if(s.section_name) { %> — Sec <%= s.section_name %><% } %></span><% } else { %><span style="color:#94a3b8">—</span><% } %>
+          </td>
+          <td style="font-size:13px"><%= s.parent_name || '—' %></td>
+          <td style="font-size:13px"><%= s.parent_phone || '—' %></td>
+          <td style="font-size:12px;color:#64748b"><%= formatDate(s.admission_date) %></td>
+          <td><span class="badge <%= s.is_active ? 'badge-success' : 'badge-danger' %>"><%= s.is_active ? 'Active' : 'Inactive' %></span></td>
+          <td>
+            <div style="display:flex;gap:6px">
+              <a href="/admin/students/<%= s.id %>/edit" class="btn btn-outline btn-sm">✏️ Edit</a>
+              <a href="/fees/collect?student_id=<%= s.id %>" class="btn btn-ghost btn-sm" title="Collect Fee">💳</a>
+              <form method="POST" action="/admin/students/<%= s.id %>/delete" style="display:inline"
+                    data-confirm="Deactivate this student?">
+                <button type="submit" class="btn btn-ghost btn-sm" title="Deactivate">🗑️</button>
+              </form>
+            </div>
+          </td>
+        </tr>
+        <% }) %>
+        </tbody>
+      </table>
+    </div>
+
+    <!-- Pagination -->
+    <% if (totalPages > 1) { %>
+    <div class="pagination">
+      <% for (let i = 1; i <= totalPages; i++) { %>
+      <a href="?page=<%= i %>&search=<%= search %>&class_id=<%= class_id %>&section_id=<%= section_id %>&status=<%= status %>"
+         class="page-btn <%= page === i ? 'active' : '' %>"><%= i %></a>
+      <% } %>
+    </div>
+    <% } %>
+
+    <% } else { %>
+    <div class="empty-state">
+      <div class="empty-icon">👨‍🎓</div>
+      <h3>No Students Found</h3>
+      <p>No students match your search criteria.</p>
+      <a href="/admin/students/new" class="btn btn-primary" style="margin-top:16px">+ Add First Student</a>
+    </div>
+    <% } %>
+  </div>
+</div>

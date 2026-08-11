@@ -1,0 +1,74 @@
+<!-- Mark Attendance -->
+<div class="page-header">
+  <div>
+    <h1 class="page-title">Mark Daily Attendance</h1>
+    <p class="page-subtitle"><%= staffInfo.class_name || 'Class' %> — Section <%= staffInfo.section_name || 'A' %></p>
+  </div>
+  <div style="display:flex;gap:10px">
+    <button type="button" class="btn btn-accent" id="markAllPresent">⚡ Mark All Present</button>
+    <a href="/staff/attendance/view" class="btn btn-outline">📅 View Records</a>
+  </div>
+</div>
+
+<!-- Date Selection -->
+<form method="GET" action="/staff/attendance/mark" style="margin-bottom:20px">
+  <div class="search-bar">
+    <div style="display:flex;align-items:center;gap:10px">
+      <label class="form-label" style="margin:0">Attendance Date:</label>
+      <input type="date" name="date" class="form-control" value="<%= date %>" style="max-width:200px" onchange="this.form.submit()"/>
+    </div>
+    <button type="submit" class="btn btn-primary">Load Date</button>
+  </div>
+</form>
+
+<% if (success) { %>
+<div class="alert alert-success">✅ <%= success %></div>
+<% } %>
+
+<!-- Attendance Entry Form -->
+<% if (students.length) { %>
+<form method="POST" action="/staff/attendance/mark">
+  <input type="hidden" name="date" value="<%= date %>"/>
+
+  <div class="att-grid" style="margin-bottom:24px">
+    <% students.forEach(s => { %>
+    <div class="att-card">
+      <div>
+        <div class="att-student-name"><%= s.first_name %> <%= s.last_name %></div>
+        <div class="att-admission"><%= s.admission_no %></div>
+      </div>
+      <div class="att-radio-group">
+        <label class="att-radio-label p" title="Present">
+          <input type="radio" name="statuses[<%= s.id %>]" value="present"
+                 <%= (!s.existing_status || s.existing_status === 'present') ? 'checked' : '' %>/>
+          <span>P</span>
+        </label>
+        <label class="att-radio-label a" title="Absent">
+          <input type="radio" name="statuses[<%= s.id %>]" value="absent"
+                 <%= (s.existing_status === 'absent') ? 'checked' : '' %>/>
+          <span>A</span>
+        </label>
+        <label class="att-radio-label l" title="Leave">
+          <input type="radio" name="statuses[<%= s.id %>]" value="leave"
+                 <%= (s.existing_status === 'leave') ? 'checked' : '' %>/>
+          <span>L</span>
+        </label>
+      </div>
+    </div>
+    <% }) %>
+  </div>
+
+  <div style="position:sticky;bottom:20px;background:#fff;padding:16px 24px;border-radius:12px;box-shadow:0 8px 30px rgba(0,0,0,0.12);border:1.5px solid #e2e8f0;display:flex;align-items:center;justify-space-between">
+    <div style="font-size:13.5px;color:#64748b">
+      Recording for <strong><%= students.length %></strong> students on <strong><%= formatDate(date) %></strong>
+    </div>
+    <button type="submit" class="btn btn-primary btn-lg">💾 Save Attendance</button>
+  </div>
+</form>
+<% } else { %>
+<div class="empty-state">
+  <div class="empty-icon">👨‍🎓</div>
+  <h3>No Students Found</h3>
+  <p>No active students in your assigned class.</p>
+</div>
+<% } %>

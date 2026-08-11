@@ -1,0 +1,73 @@
+<!-- Student Profile -->
+<div class="page-header">
+  <div>
+    <h1 class="page-title">My Profile</h1>
+    <p class="page-subtitle">Student Details & Parent Contact</p>
+  </div>
+</div>
+
+<div class="grid-12">
+  <!-- Left card: Key summary -->
+  <div class="card">
+    <div class="card-body" style="text-align:center;padding:32px 20px">
+      <div style="width:90px;height:90px;border-radius:50%;background:#1e3a5f;color:#d4a843;display:flex;align-items:center;justify-content:center;font-size:36px;font-weight:700;margin:0 auto 16px;box-shadow:0 6px 20px rgba(30,58,95,0.25)">
+        <%= student.first_name[0] %><%= student.last_name[0] %>
+      </div>
+      <h2 style="font-size:20px;font-weight:700;color:#1a2332"><%= student.first_name %> <%= student.last_name %></h2>
+      <p style="font-size:13px;color:#64748b;margin-top:4px">Admission No: <strong style="color:#1e3a5f"><%= student.admission_no %></strong></p>
+      <div style="margin-top:14px">
+        <span class="badge badge-info" style="font-size:13px;padding:6px 14px"><%= student.class_name || 'Class' %> — Sec <%= student.section_name || 'A' %></span>
+      </div>
+    </div>
+  </div>
+
+  <!-- Right card: Details -->
+  <div class="card">
+    <div class="card-header"><div class="card-title">📋 Comprehensive Information</div></div>
+    <div class="card-body">
+      <div class="form-section" style="margin-bottom:16px">
+        <div class="form-section-title">👤 Academic & Personal Details</div>
+        <div class="info-list">
+          <div class="info-item">
+            <span class="info-icon">🎂</span>
+            <div><div class="info-label">Date of Birth</div><div class="info-value"><%= formatDate(student.date_of_birth) %></div></div>
+          </div>
+          <div class="info-item">
+            <span class="info-icon">🚻</span>
+            <div><div class="info-label">Gender</div><div class="info-value"><%= student.gender || '—' %></div></div>
+          </div>
+          <div class="info-item">
+            <span class="info-icon">🩸</span>
+            <div><div class="info-label">Blood Group</div><div class="info-value"><%= student.blood_group || '—' %></div></div>
+          </div>
+          <div class="info-item">
+            <span class="info-icon">📅</span>
+            <div><div class="info-label">Admission Date</div><div class="info-value"><%= formatDate(student.admission_date) %></div></div>
+          </div>
+        </div>
+      </div>
+
+      <div class="form-section">
+        <div class="form-section-title">👨‍👩‍👧 Parent / Guardian Details</div>
+        <div class="info-list">
+          <div class="info-item">
+            <span class="info-icon">👤</span>
+            <div><div class="info-label">Parent Name</div><div class="info-value"><%= student.parent_name || '—' %></div></div>
+          </div>
+          <div class="info-item">
+            <span class="info-icon">📞</span>
+            <div><div class="info-label">Contact Phone</div><div class="info-value"><%= student.parent_phone || '—' %></div></div>
+          </div>
+          <div class="info-item">
+            <span class="info-icon">✉️</span>
+            <div><div class="info-label">Email Address</div><div class="info-value"><%= student.parent_email || '—' %></div></div>
+          </div>
+          <div class="info-item">
+            <span class="info-icon">🏠</span>
+            <div><div class="info-label">Address</div><div class="info-value"><%= student.address || '—' %></div></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>

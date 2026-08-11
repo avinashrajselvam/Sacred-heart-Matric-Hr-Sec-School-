@@ -1,0 +1,82 @@
+<!-- Student Fees Page -->
+<div class="page-header">
+  <div>
+    <h1 class="page-title">My Fee Details</h1>
+    <p class="page-subtitle">Track your fee structure, payments made, and pending dues</p>
+  </div>
+</div>
+
+<!-- Summary Row -->
+<div class="stats-grid" style="grid-template-columns:repeat(3,1fr);margin-bottom:20px">
+  <div class="stat-card blue">
+    <div class="stat-header">
+      <div><div class="stat-value"><%= formatCurrency(totalFee) %></div><div class="stat-label">Total Fee Structure</div></div>
+      <div class="stat-icon">📋</div>
+    </div>
+  </div>
+  <div class="stat-card green">
+    <div class="stat-header">
+      <div><div class="stat-value" style="color:#22c55e"><%= formatCurrency(totalPaid) %></div><div class="stat-label">Total Amount Paid</div></div>
+      <div class="stat-icon">✅</div>
+    </div>
+  </div>
+  <div class="stat-card <%= balance > 0 ? 'red' : 'green' %>">
+    <div class="stat-header">
+      <div><div class="stat-value" style="color:<%= balance > 0 ? '#ef4444' : '#22c55e' %>"><%= formatCurrency(balance) %></div><div class="stat-label">Balance Pending</div></div>
+      <div class="stat-icon"><%= balance > 0 ? '⚠️' : '🎉' %></div>
+    </div>
+  </div>
+</div>
+
+<div class="grid-2">
+  <!-- Fee Structure Breakdown -->
+  <div class="card">
+    <div class="card-header"><div class="card-title">📚 Fee Structure Breakdown</div></div>
+    <div class="card-body" style="padding:0">
+      <% if (feeStructures.length) { %>
+      <table class="data-table">
+        <thead><tr><th>Fee Type</th><th>Academic Year</th><th>Due Date</th><th>Amount</th></tr></thead>
+        <tbody>
+        <% feeStructures.forEach(f => { %>
+        <tr>
+          <td><strong><%= f.fee_name %></strong></td>
+          <td><span class="badge badge-secondary"><%= f.academic_year %></span></td>
+          <td><%= f.due_date ? formatDate(f.due_date) : '—' %></td>
+          <td><strong><%= formatCurrency(f.amount) %></strong></td>
+        </tr>
+        <% }) %>
+        </tbody>
+      </table>
+      <% } else { %>
+      <div class="empty-state"><p>No fee structure assigned yet.</p></div>
+      <% } %>
+    </div>
+  </div>
+
+  <!-- Payment History -->
+  <div class="card">
+    <div class="card-header"><div class="card-title">🧾 Payment History & Receipts</div></div>
+    <div class="card-body" style="padding:0">
+      <% if (payments.length) { %>
+      <table class="data-table">
+        <thead><tr><th>Receipt No.</th><th>Paid</th><th>Date</th><th>Method</th><th>Receipt</th></tr></thead>
+        <tbody>
+        <% payments.forEach(p => { %>
+        <tr>
+          <td><span class="badge badge-secondary"><%= p.receipt_number %></span></td>
+          <td><strong style="color:#22c55e"><%= formatCurrency(p.amount_paid) %></strong></td>
+          <td style="font-size:12px"><%= formatDate(p.payment_date) %></td>
+          <td><span class="badge badge-info"><%= p.payment_method %></span></td>
+          <td>
+            <a href="/fees/receipt/<%= p.receipt_number %>" target="_blank" class="btn btn-ghost btn-sm">📄 PDF</a>
+          </td>
+        </tr>
+        <% }) %>
+        </tbody>
+      </table>
+      <% } else { %>
+      <div class="empty-state"><p>No payment records found.</p></div>
+      <% } %>
+    </div>
+  </div>
+</div>

@@ -1,0 +1,93 @@
+<!-- Staff Dashboard -->
+<div class="page-header">
+  <div>
+    <h1 class="page-title">Staff Dashboard</h1>
+    <p class="page-subtitle">Welcome back, <%= staffInfo.first_name %> <%= staffInfo.last_name %> (<%= staffInfo.designation || 'Staff' %>)</p>
+  </div>
+  <a href="/staff/attendance/mark" class="btn btn-primary">✏️ Mark Today's Attendance</a>
+</div>
+
+<!-- Class Assignment & Today Attendance Summary -->
+<div class="stats-grid" style="grid-template-columns:repeat(4,1fr);margin-bottom:20px">
+  <div class="stat-card blue">
+    <div class="stat-header">
+      <div><div class="stat-value"><%= staffInfo.class_name || '—' %></div><div class="stat-label">Assigned Class</div></div>
+      <div class="stat-icon">🏛️</div>
+    </div>
+    <div class="stat-change">Section <%= staffInfo.section_name || '—' %></div>
+  </div>
+
+  <div class="stat-card purple">
+    <div class="stat-header">
+      <div><div class="stat-value" data-counter><%= assignedStudents %></div><div class="stat-label">Assigned Students</div></div>
+      <div class="stat-icon">👨‍🎓</div>
+    </div>
+    <a href="/staff/students" style="font-size:12px;color:#8b5cf6">View class roster →</a>
+  </div>
+
+  <div class="stat-card green">
+    <div class="stat-header">
+      <div><div class="stat-value" data-counter><%= todayAtt.present || 0 %></div><div class="stat-label">Present Today</div></div>
+      <div class="stat-icon">✅</div>
+    </div>
+    <div class="stat-change">Out of <%= assignedStudents %></div>
+  </div>
+
+  <div class="stat-card red">
+    <div class="stat-header">
+      <div><div class="stat-value" data-counter><%= todayAtt.absent || 0 %></div><div class="stat-label">Absent Today</div></div>
+      <div class="stat-icon">❌</div>
+    </div>
+    <div class="stat-change"><%= todayAtt.leave || 0 %> on leave</div>
+  </div>
+</div>
+
+<div class="grid-2">
+  <!-- Quick Actions -->
+  <div class="card">
+    <div class="card-header"><div class="card-title">⚡ Quick Actions</div></div>
+    <div class="card-body">
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px">
+        <a href="/staff/attendance/mark" class="btn btn-primary" style="justify-content:center;padding:16px;flex-direction:column;gap:6px">
+          <span style="font-size:24px">✏️</span>
+          <span>Mark Attendance</span>
+        </a>
+        <a href="/staff/attendance/view" class="btn btn-outline" style="justify-content:center;padding:16px;flex-direction:column;gap:6px">
+          <span style="font-size:24px">📅</span>
+          <span>View Attendance</span>
+        </a>
+        <a href="/staff/students" class="btn btn-outline" style="justify-content:center;padding:16px;flex-direction:column;gap:6px">
+          <span style="font-size:24px">👨‍🎓</span>
+          <span>Class Roster</span>
+        </a>
+        <a href="/staff/announcements" class="btn btn-outline" style="justify-content:center;padding:16px;flex-direction:column;gap:6px">
+          <span style="font-size:24px">📢</span>
+          <span>Announcements</span>
+        </a>
+      </div>
+    </div>
+  </div>
+
+  <!-- Announcements -->
+  <div class="card">
+    <div class="card-header">
+      <div class="card-title">📢 Staff Notices</div>
+      <a href="/staff/announcements" class="btn btn-ghost btn-sm">View all</a>
+    </div>
+    <div class="card-body">
+      <% if (announcements.length) { %>
+      <div style="display:flex;flex-direction:column;gap:12px">
+        <% announcements.forEach(a => { %>
+        <div style="padding-bottom:10px;border-bottom:1px solid #f1f5f9">
+          <div style="font-weight:600;font-size:14px;color:#1e3a5f"><%= a.title %></div>
+          <div style="font-size:12.5px;color:#475569;margin-top:2px"><%= a.content %></div>
+          <div style="font-size:11px;color:#94a3b8;margin-top:4px"><%= formatDate(a.created_at) %></div>
+        </div>
+        <% }) %>
+      </div>
+      <% } else { %>
+      <div class="empty-state"><p>No staff notices currently.</p></div>
+      <% } %>
+    </div>
+  </div>
+</div>
