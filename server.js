@@ -14,6 +14,8 @@ class SQLiteSessionStore extends session.Store {
   constructor(database) {
     super();
     this.db = database;
+    // Drop old sessions table (may have TEXT expired column from previous version)
+    this.db.exec(`DROP TABLE IF EXISTS sessions`);
     this.db.exec(`
       CREATE TABLE IF NOT EXISTS sessions (
         sid TEXT PRIMARY KEY,
@@ -77,8 +79,9 @@ app.use(methodOverride('_method'));
 app.use(session({
   store: new SQLiteSessionStore(db),
   secret: process.env.SESSION_SECRET || 'sacred_heart_secret_2024',
-  resave: false,
+  resave: true,
   saveUninitialized: false,
+  rolling: true,
   cookie: {
     maxAge: 8 * 60 * 60 * 1000,  // 8 hours
     httpOnly: true,

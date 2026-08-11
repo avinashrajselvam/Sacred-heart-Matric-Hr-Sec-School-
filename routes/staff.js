@@ -7,19 +7,17 @@ const { formatDate, formatCurrency, todayStr, logActivity } = require('../utils/
 
 const guard = [requireAuth, requireRole('staff')];
 
-// ── Staff Dashboard ───────────────────────────────────────────────────────────
-router.get('/', ...guard, (req, res) => {
-  const staffId   = req.session.user.linked_id;
-  const staffInfo = db.prepare(`
+// Shared middleware: load staff profile for every staff route (prevents null crashes)
+function loadStaffInfo(req, res, next) {
+  const raw = db.prepare(`
     SELECT s.*, c.name as class_name, sec.name as section_name
     FROM staff s
     LEFT JOIN classes c ON c.id=s.assigned_class_id
     LEFT JOIN sections sec ON sec.id=s.assigned_section_id
     WHERE s.id=?
-  `).get(staffId);
-
-  const staffObj = staffInfo || {
-    id: staffId || 0,
+  `).get(req.session.user.linked_id);
+  req.staffInfo = raw || {
+    id: req.session.user.linked_id || 0,
     first_name: req.session.user.displayName || req.session.user.username,
     last_name: '',
     employee_id: req.session.user.username,
@@ -28,14 +26,20 @@ router.get('/', ...guard, (req, res) => {
     class_name: '—',
     section_name: '—'
   };
+  next();
+}
+const staffGuard = [...guard, loadStaffInfo];
 
-  const assignedStudents = staffObj.assigned_class_id ? db.prepare(`
+// ── Staff Dashboard ───────────────────────────────────────────────────────────
+router.get('/', ...staffGuard, (req, res) => {
+  const si = req.staffInfo;
+
+  const assignedStudents = si.assigned_class_id ? db.prepare(`
     SELECT COUNT(*) as c FROM students
     WHERE class_id=? AND section_id=? AND is_active=1
-  `).get(staffObj.assigned_class_id, staffObj.assigned_section_id).c : 0;
+  `).get(si.assigned_class_id, si.assigned_section_id).c : 0;
 
-  // Today's attendance for assigned class/section
-  const todayAtt = staffObj.assigned_class_id ? db.prepare(`
+  const todayAtt = si.assigned_class_id ? db.prepare(`
     SELECT
       SUM(CASE WHEN a.status='present' THEN 1 ELSE 0 END) as present,
       SUM(CASE WHEN a.status='absent'  THEN 1 ELSE 0 END) as absent,
@@ -43,7 +47,7 @@ router.get('/', ...guard, (req, res) => {
     FROM students s
     LEFT JOIN attendance a ON a.student_id=s.id AND a.date=?
     WHERE s.class_id=? AND s.section_id=? AND s.is_active=1
-  `).get(todayStr(), staffObj.assigned_class_id, staffObj.assigned_section_id) : { present:0, absent:0, leave:0 };
+  `).get(todayStr(), si.assigned_class_id, si.assigned_section_id) : { present:0, absent:0, leave:0 };
 
   const announcements = db.prepare(`
     SELECT * FROM announcements
@@ -53,31 +57,30 @@ router.get('/', ...guard, (req, res) => {
 
   res.render('staff/dashboard', {
     title: 'Staff Dashboard',
-    staffInfo: staffObj, assignedStudents, todayAtt, announcements,
+    staffInfo: si, assignedStudents, todayAtt, announcements,
     today: todayStr(), formatDate
   });
 });
 
 // ── Staff Profile ─────────────────────────────────────────────────────────────
-router.get('/profile', ...guard, (req, res) => {
-  const staffInfo = db.prepare(`
-    SELECT s.*, c.name as class_name, sec.name as section_name
-    FROM staff s
-    LEFT JOIN classes c ON c.id=s.assigned_class_id
-    LEFT JOIN sections sec ON sec.id=s.assigned_section_id
-    WHERE s.id=?
-  `).get(req.session.user.linked_id);
-  res.render('staff/profile', { title: 'My Profile', staffInfo, formatDate });
+router.get('/profile', ...staffGuard, (req, res) => {
+  res.render('staff/profile', { title: 'My Profile', staffInfo: req.staffInfo, formatDate });
 });
 
 // ── View Assigned Students ────────────────────────────────────────────────────
-router.get('/students', ...guard, (req, res) => {
-  const staffInfo = db.prepare('SELECT * FROM staff WHERE id=?').get(req.session.user.linked_id);
+router.get('/students', ...staffGuard, (req, res) => {
+  const si = req.staffInfo;
   const { search = '' } = req.query;
+
+  if (!si.assigned_class_id) {
+    return res.render('staff/students', {
+      title: 'My Students', students: [], search, staffInfo: si, today: todayStr()
+    });
+  }
 
   let students;
   const baseWhere = `s.class_id=? AND s.section_id=? AND s.is_active=1`;
-  const baseParams = [staffInfo.assigned_class_id, staffInfo.assigned_section_id];
+  const baseParams = [si.assigned_class_id, si.assigned_section_id];
 
   if (search) {
     students = db.prepare(`
@@ -98,7 +101,6 @@ router.get('/students', ...guard, (req, res) => {
     `).all(...baseParams);
   }
 
-  // Attach today's attendance for each student
   students.forEach(s => {
     const att = db.prepare("SELECT status FROM attendance WHERE student_id=? AND date=?")
       .get(s.id, todayStr());
@@ -106,20 +108,22 @@ router.get('/students', ...guard, (req, res) => {
   });
 
   res.render('staff/students', {
-    title: 'My Students', students, search, staffInfo, today: todayStr()
+    title: 'My Students', students, search, staffInfo: si, today: todayStr()
   });
 });
 
 // ── Student Detail (staff view) ────────────────────────────────────────────────
-router.get('/students/:id', ...guard, (req, res) => {
-  const staffInfo = db.prepare('SELECT * FROM staff WHERE id=?').get(req.session.user.linked_id);
-  const student   = db.prepare(`
+router.get('/students/:id', ...staffGuard, (req, res) => {
+  const si = req.staffInfo;
+  if (!si.assigned_class_id) return res.redirect('/staff/students');
+
+  const student = db.prepare(`
     SELECT s.*, c.name as class_name, sec.name as section_name
     FROM students s
     LEFT JOIN classes c ON c.id=s.class_id
     LEFT JOIN sections sec ON sec.id=s.section_id
     WHERE s.id=? AND s.class_id=?
-  `).get(req.params.id, staffInfo.assigned_class_id);
+  `).get(req.params.id, si.assigned_class_id);
 
   if (!student) return res.redirect('/staff/students');
 
@@ -135,7 +139,6 @@ router.get('/students/:id', ...guard, (req, res) => {
   const totalDays = Object.values(summary).reduce((a,b)=>a+b,0);
   const percentage = totalDays > 0 ? Math.round((summary.present/totalDays)*100) : 0;
 
-  // Fee summary (if permitted — all staff can view)
   const feeStructures = db.prepare('SELECT * FROM fee_structures WHERE class_id=? AND is_active=1').all(student.class_id);
   const payments = db.prepare('SELECT * FROM fee_payments WHERE student_id=? ORDER BY payment_date DESC').all(student.id);
   const totalFee  = feeStructures.reduce((s,f) => s+f.amount, 0);
@@ -150,31 +153,33 @@ router.get('/students/:id', ...guard, (req, res) => {
 });
 
 // ── Mark Attendance ───────────────────────────────────────────────────────────
-router.get('/attendance/mark', ...guard, (req, res) => {
-  const staffInfo = db.prepare('SELECT * FROM staff WHERE id=?').get(req.session.user.linked_id);
+router.get('/attendance/mark', ...staffGuard, (req, res) => {
+  const si = req.staffInfo;
   const { date = todayStr() } = req.query;
 
-  const students = db.prepare(`
+  const students = si.assigned_class_id ? db.prepare(`
     SELECT s.id, s.first_name, s.last_name, s.admission_no,
            a.status as existing_status
     FROM students s
     LEFT JOIN attendance a ON a.student_id=s.id AND a.date=?
     WHERE s.class_id=? AND s.section_id=? AND s.is_active=1
     ORDER BY s.first_name
-  `).all(date, staffInfo.assigned_class_id, staffInfo.assigned_section_id);
+  `).all(date, si.assigned_class_id, si.assigned_section_id) : [];
 
   res.render('staff/mark-attendance', {
     title: 'Mark Attendance',
-    students, staffInfo, date,
+    students, staffInfo: si, date,
     success: req.query.success, formatDate
   });
 });
 
-router.post('/attendance/mark', ...guard, (req, res) => {
+router.post('/attendance/mark', ...staffGuard, (req, res) => {
   const { date, statuses } = req.body;
   if (!statuses || !date) return res.redirect('/staff/attendance/mark');
 
-  const staffInfo = db.prepare('SELECT * FROM staff WHERE id=?').get(req.session.user.linked_id);
+  const si = req.staffInfo;
+  if (!si.assigned_class_id) return res.redirect('/staff/attendance/mark');
+
   const insertOrReplace = db.prepare(`
     INSERT INTO attendance (student_id, class_id, section_id, date, status, marked_by)
     VALUES (?,?,?,?,?,?)
@@ -185,8 +190,8 @@ router.post('/attendance/mark', ...guard, (req, res) => {
     entries.forEach(({ studentId, status }) => {
       insertOrReplace.run(
         parseInt(studentId),
-        staffInfo.assigned_class_id,
-        staffInfo.assigned_section_id,
+        si.assigned_class_id,
+        si.assigned_section_id,
         date, status,
         req.session.user.id
       );
@@ -203,9 +208,16 @@ router.post('/attendance/mark', ...guard, (req, res) => {
 });
 
 // ── View Attendance ───────────────────────────────────────────────────────────
-router.get('/attendance/view', ...guard, (req, res) => {
-  const staffInfo = db.prepare('SELECT * FROM staff WHERE id=?').get(req.session.user.linked_id);
+router.get('/attendance/view', ...staffGuard, (req, res) => {
+  const si = req.staffInfo;
   const { month = new Date().toISOString().slice(0,7) } = req.query;
+
+  if (!si.assigned_class_id) {
+    return res.render('staff/view-attendance', {
+      title: 'Attendance Records',
+      students: [], dates: [], pivot: {}, month, staffInfo: si, formatDate
+    });
+  }
 
   const records = db.prepare(`
     SELECT a.date, a.status, s.first_name, s.last_name, s.admission_no
@@ -213,17 +225,15 @@ router.get('/attendance/view', ...guard, (req, res) => {
     JOIN students s ON s.id=a.student_id
     WHERE s.class_id=? AND s.section_id=? AND a.date LIKE ?
     ORDER BY a.date, s.first_name
-  `).all(staffInfo.assigned_class_id, staffInfo.assigned_section_id, `${month}%`);
+  `).all(si.assigned_class_id, si.assigned_section_id, `${month}%`);
 
   const students = db.prepare(`
     SELECT id, first_name, last_name, admission_no FROM students
     WHERE class_id=? AND section_id=? AND is_active=1 ORDER BY first_name
-  `).all(staffInfo.assigned_class_id, staffInfo.assigned_section_id);
+  `).all(si.assigned_class_id, si.assigned_section_id);
 
-  // Build dates list
   const dates = [...new Set(records.map(r => r.date))].sort();
 
-  // Build pivot table: studentId -> date -> status
   const pivot = {};
   students.forEach(s => { pivot[s.id] = {}; });
   records.forEach(r => {
@@ -233,12 +243,12 @@ router.get('/attendance/view', ...guard, (req, res) => {
 
   res.render('staff/view-attendance', {
     title: 'Attendance Records',
-    students, dates, pivot, month, staffInfo, formatDate
+    students, dates, pivot, month, staffInfo: si, formatDate
   });
 });
 
 // ── Staff Announcements ────────────────────────────────────────────────────────
-router.get('/announcements', ...guard, (req, res) => {
+router.get('/announcements', ...staffGuard, (req, res) => {
   const announcements = db.prepare(`
     SELECT * FROM announcements
     WHERE is_active=1 AND target_audience IN ('all','staff')
@@ -248,7 +258,7 @@ router.get('/announcements', ...guard, (req, res) => {
 });
 
 // ── My Attendance (Punch Card) ────────────────────────────────────────────────
-router.get('/my-attendance', ...guard, (req, res) => {
+router.get('/my-attendance', ...staffGuard, (req, res) => {
   const staffId = req.session.user.linked_id;
   const today   = require('../utils/helpers').todayStr();
 
