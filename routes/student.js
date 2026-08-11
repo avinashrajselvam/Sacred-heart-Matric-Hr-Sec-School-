@@ -18,10 +18,18 @@ router.get('/', ...guard, (req, res) => {
     WHERE s.id=?
   `).get(studentId);
 
-  if (!student) return res.redirect('/logout');
+  const studentObj = student || {
+    id: studentId || 0,
+    first_name: req.session.user.displayName || req.session.user.username,
+    last_name: '',
+    admission_no: req.session.user.username,
+    class_id: null,
+    class_name: '—',
+    section_name: '—'
+  };
 
   // Fee summary
-  const feeStructures = db.prepare('SELECT * FROM fee_structures WHERE class_id=? AND is_active=1').all(student.class_id);
+  const feeStructures = studentObj.class_id ? db.prepare('SELECT * FROM fee_structures WHERE class_id=? AND is_active=1').all(studentObj.class_id) : [];
   const payments      = db.prepare('SELECT * FROM fee_payments WHERE student_id=?').all(studentId);
   const totalFee  = feeStructures.reduce((s, f) => s + f.amount, 0);
   const totalPaid = payments.reduce((s, p) => s + p.amount_paid, 0);
@@ -56,7 +64,7 @@ router.get('/', ...guard, (req, res) => {
 
   res.render('student/dashboard', {
     title: 'My Dashboard',
-    student, totalFee, totalPaid, balance,
+    student: studentObj, totalFee, totalPaid, balance,
     attSummary, percentage, announcements, recentPayments,
     formatDate, formatCurrency
   });

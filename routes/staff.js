@@ -18,15 +18,24 @@ router.get('/', ...guard, (req, res) => {
     WHERE s.id=?
   `).get(staffId);
 
-  if (!staffInfo) return res.redirect('/logout');
+  const staffObj = staffInfo || {
+    id: staffId || 0,
+    first_name: req.session.user.displayName || req.session.user.username,
+    last_name: '',
+    employee_id: req.session.user.username,
+    assigned_class_id: null,
+    assigned_section_id: null,
+    class_name: '—',
+    section_name: '—'
+  };
 
-  const assignedStudents = db.prepare(`
+  const assignedStudents = staffObj.assigned_class_id ? db.prepare(`
     SELECT COUNT(*) as c FROM students
     WHERE class_id=? AND section_id=? AND is_active=1
-  `).get(staffInfo.assigned_class_id, staffInfo.assigned_section_id).c;
+  `).get(staffObj.assigned_class_id, staffObj.assigned_section_id).c : 0;
 
   // Today's attendance for assigned class/section
-  const todayAtt = db.prepare(`
+  const todayAtt = staffObj.assigned_class_id ? db.prepare(`
     SELECT
       SUM(CASE WHEN a.status='present' THEN 1 ELSE 0 END) as present,
       SUM(CASE WHEN a.status='absent'  THEN 1 ELSE 0 END) as absent,
@@ -34,7 +43,7 @@ router.get('/', ...guard, (req, res) => {
     FROM students s
     LEFT JOIN attendance a ON a.student_id=s.id AND a.date=?
     WHERE s.class_id=? AND s.section_id=? AND s.is_active=1
-  `).get(todayStr(), staffInfo.assigned_class_id, staffInfo.assigned_section_id);
+  `).get(todayStr(), staffObj.assigned_class_id, staffObj.assigned_section_id) : { present:0, absent:0, leave:0 };
 
   const announcements = db.prepare(`
     SELECT * FROM announcements
@@ -44,7 +53,7 @@ router.get('/', ...guard, (req, res) => {
 
   res.render('staff/dashboard', {
     title: 'Staff Dashboard',
-    staffInfo, assignedStudents, todayAtt, announcements,
+    staffInfo: staffObj, assignedStudents, todayAtt, announcements,
     today: todayStr(), formatDate
   });
 });

@@ -18,24 +18,33 @@ class SQLiteSessionStore extends session.Store {
       CREATE TABLE IF NOT EXISTS sessions (
         sid TEXT PRIMARY KEY,
         sess TEXT NOT NULL,
-        expired TEXT NOT NULL
+        expired INTEGER NOT NULL
       )
     `);
   }
   get(sid, cb) {
     try {
-      const row = this.db.prepare("SELECT sess FROM sessions WHERE sid=? AND expired > datetime('now')").get(sid);
+      const now = Date.now();
+      const row = this.db.prepare("SELECT sess FROM sessions WHERE sid=? AND expired > ?").get(sid, now);
       cb(null, row ? JSON.parse(row.sess) : null);
     } catch (e) { cb(e); }
   }
   set(sid, sess, cb) {
     try {
       const maxAge = (sess.cookie && sess.cookie.maxAge) || 8 * 3600 * 1000;
-      const expired = new Date(Date.now() + maxAge).toISOString();
+      const expired = Date.now() + maxAge;
       this.db.prepare(`
         INSERT INTO sessions (sid, sess, expired) VALUES (?, ?, ?)
         ON CONFLICT(sid) DO UPDATE SET sess=excluded.sess, expired=excluded.expired
       `).run(sid, JSON.stringify(sess), expired);
+      if (cb) cb(null);
+    } catch (e) { if (cb) cb(e); }
+  }
+  touch(sid, sess, cb) {
+    try {
+      const maxAge = (sess.cookie && sess.cookie.maxAge) || 8 * 3600 * 1000;
+      const expired = Date.now() + maxAge;
+      this.db.prepare("UPDATE sessions SET expired=? WHERE sid=?").run(expired, sid);
       if (cb) cb(null);
     } catch (e) { if (cb) cb(e); }
   }
