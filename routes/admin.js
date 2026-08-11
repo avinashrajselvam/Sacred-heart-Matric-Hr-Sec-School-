@@ -450,6 +450,39 @@ router.post('/fee-structure/:id/delete', ...guard, (req, res) => {
   res.redirect('/admin/fee-structure');
 });
 
+// ── Student Attendance Overview ───────────────────────────────────────────────
+router.get('/attendance', ...guard, (req, res) => {
+  const { date = todayStr(), class_id = '' } = req.query;
+  const classes = db.prepare('SELECT * FROM classes ORDER BY display_order').all();
+
+  let whereClass = class_id ? 'AND s.class_id=?' : '';
+  let params = class_id ? [date, class_id] : [date];
+
+  const records = db.prepare(`
+    SELECT s.id, s.admission_no, s.first_name, s.last_name,
+           c.name as class_name, sec.name as section_name,
+           a.status, a.remarks
+    FROM students s
+    LEFT JOIN classes c ON c.id=s.class_id
+    LEFT JOIN sections sec ON sec.id=s.section_id
+    LEFT JOIN attendance a ON a.student_id=s.id AND a.date=?
+    WHERE s.is_active=1 ${whereClass}
+    ORDER BY c.display_order, s.first_name
+  `).all(...params);
+
+  const summary = {
+    present:   records.filter(r => r.status === 'present').length,
+    absent:    records.filter(r => r.status === 'absent').length,
+    leave:     records.filter(r => r.status === 'leave').length,
+    notMarked: records.filter(r => !r.status).length
+  };
+
+  res.render('admin/attendance', {
+    title: 'Attendance Overview',
+    records, summary, classes, date, class_id, formatDate
+  });
+});
+
 // ── Staff Attendance Overview ──────────────────────────────────────────────────
 router.get('/staff-attendance', ...guard, (req, res) => {
   const { date = todayStr() } = req.query;
