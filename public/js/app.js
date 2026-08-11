@@ -39,10 +39,16 @@ function initSidebar() {
 
 // ── Active Nav Highlight ──────────────────────────────────────────────────────
 function highlightActiveNav() {
-  const path  = window.location.pathname;
+  const path = window.location.pathname;
+  const rootRoutes = ['/admin', '/staff', '/student'];
   document.querySelectorAll('.nav-link').forEach(link => {
+    link.classList.remove('active');
     const href = link.getAttribute('href') || '';
-    if (href && href !== '/' && path.startsWith(href)) {
+    if (!href) return;
+
+    if (path === href) {
+      link.classList.add('active');
+    } else if (!rootRoutes.includes(href) && href !== '/' && path.startsWith(href + '/')) {
       link.classList.add('active');
     }
   });

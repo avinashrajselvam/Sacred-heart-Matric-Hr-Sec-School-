@@ -1,0 +1,12 @@
+{
+  "watch": ["server.js", "routes/", "middleware/", "utils/", "views/", "db/schema.js", "public/"],
+  "ext": "js,json,ejs,css",
+  "ignore": [
+    "data/*",
+    "*.db",
+    "*.db-journal",
+    "*.db-wal",
+    "*.db-shm",
+    "node_modules/*"
+  ]
+}
