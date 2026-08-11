@@ -115,6 +115,7 @@
   </div>
   <div class="card-body" style="padding:0">
     <% if (history.length) { %>
+    <div class="table-wrap">
     <table class="data-table">
       <thead>
         <tr>
@@ -165,6 +166,7 @@
       <% }) %>
       </tbody>
     </table>
+    </div>
     <% } else { %>
     <div class="empty-state">
       <div class="empty-icon">📋</div>

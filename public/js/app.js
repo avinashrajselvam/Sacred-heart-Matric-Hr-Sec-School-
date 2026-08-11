@@ -27,9 +27,13 @@ function initSidebar() {
     sidebar.classList.toggle('open');
     overlay && overlay.classList.toggle('show');
   });
-  overlay && overlay.addEventListener('click', () => {
+  const closeSidebar = () => {
     sidebar.classList.remove('open');
-    overlay.classList.remove('show');
+    overlay && overlay.classList.remove('show');
+  };
+  overlay && overlay.addEventListener('click', closeSidebar);
+  document.querySelectorAll('.sidebar-nav .nav-link').forEach(link => {
+    link.addEventListener('click', closeSidebar);
   });
 }
 

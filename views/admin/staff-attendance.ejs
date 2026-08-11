@@ -79,6 +79,7 @@
   </div>
   <div class="card-body" style="padding:0">
     <% if (records.length) { %>
+    <div class="table-wrap">
     <table class="data-table" id="staffAttTable">
       <thead>
         <tr>
@@ -149,6 +150,7 @@
       <% }) %>
       </tbody>
     </table>
+    </div>
     <% } else { %>
     <div class="empty-state">
       <div class="empty-icon">📋</div>
