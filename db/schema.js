@@ -192,6 +192,15 @@ try {
 
     db.prepare("INSERT INTO users (username, password_hash, role, linked_id) VALUES ('mary.joseph', ?, 'staff', ?)").run(staffHash, resStaff.lastInsertRowid);
 
+    // Demo Student
+    const studentHash = bcrypt.hashSync('student123', 10);
+    const resStudent = db.prepare(`
+      INSERT INTO students (admission_no, first_name, last_name, date_of_birth, gender, class_id, section_id, parent_name, parent_phone, parent_email, address, blood_group)
+      VALUES ('SH001', 'Rahul', 'Sharma', '2012-05-15', 'Male', ?, ?, 'Suresh Sharma', '9876543210', 'suresh@gmail.com', 'Arakkonam, Tamil Nadu', 'O+')
+    `).run(cls6?.id, sec6A?.id);
+
+    db.prepare("INSERT INTO users (username, password_hash, role, linked_id) VALUES ('sh001', ?, 'student', ?)").run(studentHash, resStudent.lastInsertRowid);
+
     // Fees
     const insertFee = db.prepare('INSERT INTO fee_structures (class_id, fee_name, amount, academic_year, due_date) VALUES (?, ?, ?, ?, ?)');
     classes.forEach(cls => {
