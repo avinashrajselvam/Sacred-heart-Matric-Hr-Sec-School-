@@ -1,60 +1,13 @@
 'use strict';
 require('dotenv').config();
 const express        = require('express');
-const session        = require('express-session');
+const cookieSession  = require('cookie-session');
 const methodOverride = require('method-override');
 const path           = require('path');
 const db             = require('./db/schema');
 
 const app = express();
 const PORT = process.env.PORT || 3000;
-
-// ── Custom SQLite Session Store using better-sqlite3 ──────────────────────────
-class SQLiteSessionStore extends session.Store {
-  constructor(database) {
-    super();
-    this.db = database;
-    this.db.exec(`
-      CREATE TABLE IF NOT EXISTS sessions (
-        sid TEXT PRIMARY KEY,
-        sess TEXT NOT NULL,
-        expired INTEGER NOT NULL
-      )
-    `);
-  }
-  get(sid, cb) {
-    try {
-      const now = Date.now();
-      const row = this.db.prepare("SELECT sess FROM sessions WHERE sid=? AND expired > ?").get(sid, now);
-      cb(null, row ? JSON.parse(row.sess) : null);
-    } catch (e) { cb(e); }
-  }
-  set(sid, sess, cb) {
-    try {
-      const maxAge = (sess.cookie && sess.cookie.maxAge) || 8 * 3600 * 1000;
-      const expired = Date.now() + maxAge;
-      this.db.prepare(`
-        INSERT INTO sessions (sid, sess, expired) VALUES (?, ?, ?)
-        ON CONFLICT(sid) DO UPDATE SET sess=excluded.sess, expired=excluded.expired
-      `).run(sid, JSON.stringify(sess), expired);
-      if (cb) cb(null);
-    } catch (e) { if (cb) cb(e); }
-  }
-  touch(sid, sess, cb) {
-    try {
-      const maxAge = (sess.cookie && sess.cookie.maxAge) || 8 * 3600 * 1000;
-      const expired = Date.now() + maxAge;
-      this.db.prepare("UPDATE sessions SET expired=? WHERE sid=?").run(expired, sid);
-      if (cb) cb(null);
-    } catch (e) { if (cb) cb(e); }
-  }
-  destroy(sid, cb) {
-    try {
-      this.db.prepare("DELETE FROM sessions WHERE sid=?").run(sid);
-      if (cb) cb(null);
-    } catch (e) { if (cb) cb(e); }
-  }
-}
 
 // ── View Engine ───────────────────────────────────────────────────────────────
 const ejsLayouts = require('express-ejs-layouts');
@@ -73,18 +26,13 @@ app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 app.use(express.json({ limit: '10mb' }));
 app.use(methodOverride('_method'));
 
-// ── Session ───────────────────────────────────────────────────────────────────
-app.use(session({
-  store: new SQLiteSessionStore(db),
-  secret: process.env.SESSION_SECRET || 'sacred_heart_secret_2024',
-  resave: false,
-  saveUninitialized: false,
-  rolling: true,
-  cookie: {
-    maxAge: 8 * 60 * 60 * 1000,  // 8 hours
-    httpOnly: true,
-    sameSite: 'lax'
-  }
+// ── Session (Stateless Signed Cookie Session for Serverless / Vercel Compatibility) ──
+app.use(cookieSession({
+  name: 'sh_crm_session',
+  keys: [process.env.SESSION_SECRET || 'sacred_heart_secret_key_2024_arakkonam'],
+  maxAge: 24 * 60 * 60 * 1000, // 24 hours
+  sameSite: 'lax',
+  httpOnly: true
 }));
 
 // ── Global Middleware ─────────────────────────────────────────────────────────

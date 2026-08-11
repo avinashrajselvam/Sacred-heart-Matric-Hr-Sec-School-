@@ -59,9 +59,12 @@ router.post('/login', (req, res) => {
 // GET /logout
 router.get('/logout', (req, res) => {
   if (req.session && req.session.user) {
-    logActivity(db, req.session.user.id, 'LOGOUT', 'User logged out', req.ip);
+    try {
+      logActivity(db, req.session.user.id, 'LOGOUT', 'User logged out', req.ip);
+    } catch (e) {}
   }
-  req.session.destroy(() => res.redirect('/login'));
+  req.session = null;
+  res.redirect('/login');
 });
 
 module.exports = router;
